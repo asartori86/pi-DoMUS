@@ -885,16 +885,24 @@ template <int dim, int spacedim, typename LAC>
 void piDoMUS<dim, spacedim, LAC>::run ()
 {
   interface.set_stepper(time_stepper);
+  bool load_snap = true;
   for (current_cycle = 0; current_cycle < n_cycles; ++current_cycle)
     {
-      if (current_cycle == 0)
+      if (resume_computation && load_snap)
         {
-          make_grid_fe();
-          setup_dofs(true);
+          resume_from_snapshot();
+          load_snap = false;
         }
       else
-        refine_mesh();
-
+        {
+          if (current_cycle == 0)
+            {
+              make_grid_fe();
+              setup_dofs(true);
+            }
+          else
+            refine_mesh();
+        }
       constraints.distribute(solution);
       constraints_dot.distribute(solution_dot);
 
@@ -950,7 +958,7 @@ piDoMUS<dim, spacedim, LAC>::output_step(const double  t,
 
   this->step_number = step_number;
   syncronize(t,solution,solution_dot);
-
+  create_snapshot();
   interface.output_solution(current_cycle,
                             step_number);
 }

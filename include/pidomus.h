@@ -50,6 +50,21 @@
 #include "lac/lac_type.h"
 #include "lac/lac_initializer.h"
 
+
+#include <deal2lkit/utilities.h>
+
+#include <deal.II/base/mpi.h>
+#include <deal.II/grid/grid_tools.h>
+#include <deal.II/distributed/solution_transfer.h>
+
+#ifdef DEAL_II_WITH_ZLIB
+#  include <zlib.h>
+#endif
+
+#include <boost/archive/binary_oarchive.hpp>
+#include <boost/archive/binary_iarchive.hpp>
+
+
 using namespace dealii;
 using namespace deal2lkit;
 using namespace pidomus;
@@ -530,7 +545,15 @@ public:
    * <code>source/checkpoint_restart.cc</code>.
    */
   template <class Archive>
-  void serialize (Archive &ar, const unsigned int version);
+  void serialize (Archive &ar, const unsigned int /*version*/)
+  {
+    ar &current_time;
+    ar &current_alpha;
+    ar &current_dt;
+    ar &step_number;
+    ar &current_cycle;
+  }
+
 private:
 
   /**

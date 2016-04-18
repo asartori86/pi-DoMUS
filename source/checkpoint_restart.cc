@@ -14,14 +14,15 @@
 #include <boost/archive/binary_iarchive.hpp>
 
 
-template <int dim, int spacedim, typename LAC>
-template<class Archive>
-void piDoMUS<dim,spacedim,LAC>::serialize (Archive &ar, const unsigned int)
-{
-  ar &current_time;
-  ar &current_alpha;
-  ar &current_dt;
-  ar &step_number;
-}
+//template <int dim, int spacedim, typename LAC>
+//template<class Archive>
+//void piDoMUS<dim,spacedim,LAC>::serialize (Archive &ar, const unsigned int)
+//{
+//  ar &current_time;
+//  ar &current_alpha;
+//  ar &current_dt;
+//  ar &step_number;
+//  ar &current_cycle;
+//}
 
 
