@@ -2,8 +2,8 @@
  *  @{
  */
 
-#ifndef _hydrogels_three_fields_h_
-#define _hydrogels_three_fields_h_
+#ifndef _hydrogels_three_fields_one_block_h_
+#define _hydrogels_three_fields_one_block_h_
 
 #include "pde_system_interface.h"
 #include <deal2lkit/parsed_function.h>
@@ -18,7 +18,8 @@
 #include <deal.II/lac/solver_gmres.h>
 #include <deal.II/lac/solver_bicgstab.h>
 
-#include <deal.II/lac/precondition.h>
+#include <deal.II/lac/trilinos_precondition.h>
+
 
 #include<deal.II/lac/schur_complement.h>
 
@@ -27,15 +28,14 @@
 #include <time.h>
 
 
-
 template <int dim, int spacedim, typename LAC>
-class HydroGelThreeFields : public PDESystemInterface<dim,spacedim, HydroGelThreeFields<dim,spacedim,LAC>, LAC>
+class HydroGelThreeFieldsOneBlock : public PDESystemInterface<dim,spacedim, HydroGelThreeFieldsOneBlock<dim,spacedim,LAC>, LAC>
 {
 public:
 
-  ~HydroGelThreeFields() {};
+  ~HydroGelThreeFieldsOneBlock() {}
 
-  HydroGelThreeFields();
+  HydroGelThreeFieldsOneBlock();
 
 
   virtual UpdateFlags get_face_update_flags() const
@@ -51,7 +51,6 @@ public:
   void declare_parameters (ParameterHandler &prm);
   void parse_parameters_call_back ();
 
-  void set_matrix_couplings(std::vector<std::string> &couplings) const;
 
   template <typename EnergyType, typename ResidualType>
   void energies_and_residuals(const typename DoFHandler<dim,spacedim>::active_cell_iterator &cell,
@@ -72,13 +71,66 @@ public:
     auto &pcout = this->get_pcout();
     if (this->wrinkling)
       {
-        pcout << "applying random distortion to grid" <<std::endl;
         signals.postprocess_newly_created_triangulation.connect(
           [&](typename parallel::distributed::Triangulation<dim,spacedim> &tria)
         {
+	  pcout << "applying random distortion to grid" <<std::endl;
           GridTools::distort_random(factor,tria,false);
         });
       }
+
+    signals.fix_initial_conditions.connect(
+	 [&](typename LAC::VectorType &sol,
+	     typename LAC::VectorType &sol_dot)
+	 {
+        std::cout << "000000000000000000000000000000000000" <<std::endl;
+        unsigned int dofs_per_cell = this->pfe()->dofs_per_cell;
+        for (unsigned int i=0; i< dofs_per_cell; ++i)
+        {
+            pcout <<  this->pfe()->system_to_component_index(i).first;
+        }
+
+
+//        double cache = 0;
+//	   double copy = 0;
+	   
+
+//	     typedef
+//  FilteredIterator<typename DoFHandler<dim, spacedim>::active_cell_iterator>
+//  CellFilter;
+
+//  auto local_copy = [this]
+//                    ()
+//  {
+//  };
+
+//  auto local_assemble = [this]
+//                        (const typename DoFHandler<dim, spacedim>::active_cell_iterator & cell,
+//                         double &,
+//                         double &)
+//  {
+
+//  };
+
+
+//  WorkStream::
+//  run (CellFilter (IteratorFilters::LocallyOwnedCell(),
+//                   this->get_dof_handler().begin_active()),
+//       CellFilter (IteratorFilters::LocallyOwnedCell(),
+//                   this->get_dof_handler().end()),
+//       local_assemble,
+//       local_copy,
+//       cache,
+//       copy);
+
+
+
+
+
+	   
+	 }
+					   );
+    
     signals.begin_make_grid_fe.connect(
       [&]()
     {
@@ -150,6 +202,30 @@ private:
 
   mutable shared_ptr<TrilinosWrappers::PreconditionSSOR> p_prec_ssor;
 
+  mutable shared_ptr<TrilinosWrappers::PreconditionBlockJacobi> preconditionblockjacobi;
+ 
+  mutable shared_ptr<TrilinosWrappers::PreconditionBlockSOR> preconditionblocksor;
+ 
+  mutable shared_ptr<TrilinosWrappers::PreconditionBlockSSOR> preconditionblockssor;
+ 
+  mutable shared_ptr<TrilinosWrappers::PreconditionBlockwiseDirect> preconditionblockwisedirect;
+ 
+  mutable shared_ptr<TrilinosWrappers::PreconditionChebyshev> preconditionchebyshev;
+ 
+  mutable shared_ptr<TrilinosWrappers::PreconditionIC> preconditionic;
+ 
+  mutable shared_ptr<TrilinosWrappers::PreconditionIdentity> preconditionidentity;
+ 
+  mutable shared_ptr<TrilinosWrappers::PreconditionILU> preconditionilu;
+ 
+  mutable shared_ptr<TrilinosWrappers::PreconditionILUT> preconditionilut;
+ 
+  mutable shared_ptr<TrilinosWrappers::PreconditionJacobi> preconditionjacobi;
+ 
+  mutable shared_ptr<TrilinosWrappers::PreconditionSOR> preconditionsor;
+ 
+  mutable shared_ptr<TrilinosWrappers::PreconditionSSOR> preconditionssor;
+  
   unsigned int it_c_lumped;
   unsigned int it_s_approx;
   unsigned int it_s;
@@ -157,19 +233,16 @@ private:
   double gamma;
   mutable  ParsedMappedFunctions<spacedim> nitsche;
 
-  double stab;
-
 
 };
 
 template <int dim, int spacedim, typename LAC>
-HydroGelThreeFields<dim,spacedim,LAC>::HydroGelThreeFields() :
-  PDESystemInterface<dim,spacedim,HydroGelThreeFields<dim,spacedim,LAC>, LAC>("Free Swelling Three Fields",
+HydroGelThreeFieldsOneBlock<dim,spacedim,LAC>::HydroGelThreeFieldsOneBlock() :
+  PDESystemInterface<dim,spacedim,HydroGelThreeFieldsOneBlock<dim,spacedim,LAC>, LAC>("Free Swelling Three Fields",
       dim+2,2,
       "FESystem[FE_Q(1)^d-FE_DGPMonomial(0)-FE_DGPMonomial(0)]",
-      "u,u,u,c,p","1,0,0"),
+      "u,u,u,u,u","0"),
   U_prec("AMG for U"),
-  c_prec_amg("AMG for c"),
   nitsche("Nitsche boundary conditions",
           this->n_components,
           this->get_component_names(),
@@ -178,19 +251,11 @@ HydroGelThreeFields<dim,spacedim,LAC>::HydroGelThreeFields() :
 
 {}
 
-template <int dim, int spacedim, typename LAC>
-void
-HydroGelThreeFields<dim,spacedim,LAC>::
-set_matrix_couplings(std::vector<std::string> &couplings) const
-{
-  couplings[0] = "1,0,1;0,1,1;1,1,0";
-  couplings[1] = "0,0,0;0,0,0;0,0,1";
-}
 
 template <int dim, int spacedim, typename LAC>
 template <typename EnergyType, typename ResidualType>
 void
-HydroGelThreeFields<dim,spacedim,LAC>::
+HydroGelThreeFieldsOneBlock<dim,spacedim,LAC>::
 energies_and_residuals(const typename DoFHandler<dim,spacedim>::active_cell_iterator &cell,
                        FEValuesCache<dim,spacedim> &fe_cache,
                        std::vector<EnergyType> &energies,
@@ -204,7 +269,6 @@ energies_and_residuals(const typename DoFHandler<dim,spacedim>::active_cell_iter
   const FEValuesExtractors::Scalar concentration(dim);
   const FEValuesExtractors::Scalar pressure(dim+1);
   {
-      auto &us = fe_cache.get_values("solution", "u", displacement, alpha);
     auto &Fs = fe_cache.get_deformation_gradients("solution", "Fu", displacement, alpha);
 
     auto &ps = fe_cache.get_values("solution", "p", pressure, alpha);
@@ -242,14 +306,12 @@ energies_and_residuals(const typename DoFHandler<dim,spacedim>::active_cell_iter
                          ) ;
 
         energies[0] += psi*JxW[q];
-            energies[0] += stab*(us[q]*us[q])*JxW[q];
+
         if (!compute_only_system_terms)
           {
-
             EnergyType pp = 0.5*p*p ;
             energies[1] += pp*JxW[q];
           }
-        (void)us;
       }
   }
 
@@ -324,9 +386,9 @@ energies_and_residuals(const typename DoFHandler<dim,spacedim>::active_cell_iter
 }
 
 template <int dim, int spacedim, typename LAC>
-void HydroGelThreeFields<dim,spacedim,LAC>::declare_parameters (ParameterHandler &prm)
+void HydroGelThreeFieldsOneBlock<dim,spacedim,LAC>::declare_parameters (ParameterHandler &prm)
 {
-  PDESystemInterface<dim,spacedim, HydroGelThreeFields<dim,spacedim,LAC>, LAC>::declare_parameters(prm);
+  PDESystemInterface<dim,spacedim, HydroGelThreeFieldsOneBlock<dim,spacedim,LAC>, LAC>::declare_parameters(prm);
   this->add_parameter(prm, &T, "T", "298.0", Patterns::Double(0.0));
   this->add_parameter(prm, &Omega, "Omega", "1e-5", Patterns::Double(0.0));
   this->add_parameter(prm, &chi, "chi", "0.1", Patterns::Double(0.0));
@@ -340,12 +402,10 @@ void HydroGelThreeFields<dim,spacedim,LAC>::declare_parameters (ParameterHandler
   this->add_parameter(prm, &factor, "distortion factor", "1e-4", Patterns::Double(0.0));
   this->add_parameter(prm, &wrinkling, "distort triangulation", "false", Patterns::Bool());
 
-  this->add_parameter(prm, &stab, "stabilization factor", "1e-4", Patterns::Double(0.0));
-
 }
 
 template <int dim, int spacedim, typename LAC>
-void HydroGelThreeFields<dim,spacedim,LAC>::parse_parameters_call_back ()
+void HydroGelThreeFieldsOneBlock<dim,spacedim,LAC>::parse_parameters_call_back ()
 {
   l02 = l0*l0;
   l03 = l02*l0;
@@ -358,13 +418,15 @@ void HydroGelThreeFields<dim,spacedim,LAC>::parse_parameters_call_back ()
 
 template <int dim, int spacedim, typename LAC>
 void
-HydroGelThreeFields<dim,spacedim,LAC>::
+HydroGelThreeFieldsOneBlock<dim,spacedim,LAC>::
 compute_system_operators(const std::vector<shared_ptr<LATrilinos::BlockMatrix> > matrices,
                          LinearOperator<LATrilinos::VectorType> &system_op,
                          LinearOperator<LATrilinos::VectorType> &prec_op,
                          LinearOperator<LATrilinos::VectorType> &) const
 {
 
+
+  
   auto &pcout = this->get_pcout();
   clock_t inizio = clock();
 
@@ -373,7 +435,6 @@ compute_system_operators(const std::vector<shared_ptr<LATrilinos::BlockMatrix> >
 
   //  auto &fe = this->pfe;
 
-  p_prec_ssor.reset (new TrilinosWrappers::PreconditionSSOR());
 
   U_prec.initialize_preconditioner(matrices[0]->block(0,0));
 
@@ -383,251 +444,33 @@ compute_system_operators(const std::vector<shared_ptr<LATrilinos::BlockMatrix> >
   //      }
 
 
-  c_prec_amg.initialize_preconditioner (matrices[0]->block(1,1));
-
-  tempo =  double(clock() - inizio)/(double)CLOCKS_PER_SEC;
-  inizio = clock();
-
-  pcout << "c amg " << tempo << " seconds" << std::endl;
-
-  p_prec_ssor->initialize (matrices[1]->block(2,2));
-  tempo =  double(clock() - inizio)/(double)CLOCKS_PER_SEC;
-  inizio = clock();
-
-  pcout << "p ssor " << tempo << " seconds" << std::endl;
-
 
   // SYSTEM MATRIX:
   auto A   =   linear_operator< LATrilinos::VectorType::BlockType >( matrices[0]->block(0,0) );
-  auto Z01 = 0*linear_operator< LATrilinos::VectorType::BlockType >( matrices[0]->block(0,1) );
-  auto Bt  =   linear_operator< LATrilinos::VectorType::BlockType >( matrices[0]->block(0,2) );
 
-  auto Z10 = 0*linear_operator< LATrilinos::VectorType::BlockType >( matrices[0]->block(1,0) );
-  auto C   =   linear_operator< LATrilinos::VectorType::BlockType >( matrices[0]->block(1,1) );
-  auto Et   =  linear_operator< LATrilinos::VectorType::BlockType >( matrices[0]->block(1,2) );
 
-  auto B   =   linear_operator< LATrilinos::VectorType::BlockType >( matrices[0]->block(2,0) );
-  auto E   =   linear_operator< LATrilinos::VectorType::BlockType >( matrices[0]->block(2,1) );
-  auto Z22 = 0*linear_operator< LATrilinos::VectorType::BlockType >( matrices[0]->block(2,2) );
-
-  auto PA  =   linear_operator< LATrilinos::VectorType::BlockType >( matrices[0]->block(0,0));
-  auto PE  =   linear_operator< LATrilinos::VectorType::BlockType >( matrices[0]->block(1,1));
-  auto Pp  =   linear_operator< LATrilinos::VectorType::BlockType >( matrices[1]->block(2,2));
-
-  static auto C_lumped =   linear_operator< LATrilinos::VectorType::BlockType >( matrices[0]->block(1,1) );
-  /*  static auto A_lumped =   linear_operator< LATrilinos::VectorType::BlockType >( matrices[0]->block(0,0) ); */
-
-////////////////// C_lumped
-  /* LATrilinos::VectorType::BlockType c_ones; */
-  /* C_lumped.reinit_domain_vector(c_ones, false); */
-  /* c_ones = 1.0; */
-
-  /* static  LATrilinos::VectorType::BlockType vec; */
-  /* vec.reinit(c_ones); */
-  /* vec=c_ones; */
-
-  /* C_lumped.vmult(vec, c_ones); */
-
-  /* C_lumped.vmult = [&vec] (LATrilinos::VectorType::BlockType &dst, */
-  /*                          const LATrilinos::VectorType::BlockType &src) */
-  /* { */
-  /*   dst = src; */
-  /*   dst.scale(vec); */
-  /* }; */
-  /* /////////////// */
-
-  const std::array<std::array<LinearOperator<LATrilinos::VectorType::BlockType>, 3 >, 3 > matrix_array = {{
-      {{ A   , null_operator(Z01) ,  Bt  }},
-      {{ null_operator(Z10) ,   C ,  Et  }},
-      {{ B   ,   E ,  null_operator(Z22) }}
+  system_op  = block_operator<1, 1, LATrilinos::VectorType>({{
+      {{ A }}
     }
-  };
-
-  system_op  = block_operator<3, 3, LATrilinos::VectorType >(matrix_array);
+  });
 
   tempo =  double(clock() - inizio)/(double)CLOCKS_PER_SEC;
   inizio = clock();
 
   pcout << "system " << tempo << " seconds" << std::endl;
 
-
-  static ReductionControl solver_control_pre(5000, 1e-6);
-  static IterationNumberControl solver_control_c_lumped(it_c_lumped);
-
-  static SolverCG<LATrilinos::VectorType::BlockType> solver_CG(solver_control_pre);
-  /* //  static SolverBicgstab<LATrilinos::VectorType::BlockType> solver_c_lumped(solver_control_c_lumped); */
-  /* //    static SolverFGMRES<LATrilinos::VectorType::BlockType> solver_c_lumped(solver_control_c_lumped); */
-  static SolverCG<LATrilinos::VectorType::BlockType> solver_c_lumped(solver_control_c_lumped);
-
-
-  //  auto A_inv = inverse_operator( PA, solver_CG, *U_prec);
-  /* auto C_inv = inverse_operator( PE, solver_CG, *c_prec); */
-  //  auto P_inv = inverse_operator( Pp, solver_CG, *p_prec_ssor);
-  auto P_inv = linear_operator<LATrilinos::VectorType::BlockType>( matrices[1]->block(2,2), *p_prec_ssor);
   auto A_inv = linear_operator<LATrilinos::VectorType::BlockType>( matrices[0]->block(0,0), U_prec);
-  auto C_inv = linear_operator<LATrilinos::VectorType::BlockType>( matrices[0]->block(1,1), c_prec_amg);
-  //  auto P_inv = linear_operator<LATrilinos::VectorType::BlockType>( matrices[1]->block(2,2), *p_prec);
 
+  auto P_i = A_inv;
 
-  auto P0_i = A_inv;
-  auto P1_i = C_inv;
-  auto P2_i = P_inv;
-
-
-  ///////////////////////////////////////////////////////////////////////////
-  auto L00 = identity_operator(A.reinit_range_vector);
-  auto L11 = identity_operator(E.reinit_range_vector);
-  auto L22 = identity_operator(Z22.reinit_range_vector);
-
-  auto L02 = null_operator(Bt);
-  auto L12 = null_operator(Et);
-  LinearOperator<LATrilinos::VectorType::BlockType> L20 = null_operator(B) - B*A_inv;
-  LinearOperator<LATrilinos::VectorType::BlockType> L21 = null_operator(E) - E*C_inv;
-
-
-
-
-  const std::array<std::array<LinearOperator<LATrilinos::VectorType::BlockType>, 3 >, 3 > L_inv_array = {{
-      {{ L00  ,  null_operator(Z01)  , L02 }},
-      {{ null_operator(Z10)  ,  L11  , L12 }},
-      {{ L20  ,  L21  , L22 }}
+  prec_op = block_operator<1, 1, LATrilinos::VectorType>({{
+      {{ P_i}} ,
     }
-  };
+  });
 
-  LinearOperator<LATrilinos::VectorType> L_inv_op =   block_operator<3, 3, LATrilinos::VectorType >(L_inv_array);
-
-  tempo =  double(clock() - inizio)/(double)CLOCKS_PER_SEC;
+    tempo =  double(clock() - inizio)/(double)CLOCKS_PER_SEC;
   inizio = clock();
-
-  pcout << "L inv " << tempo << " seconds" << std::endl;
-
-
-  auto U02 = null_operator(Bt) - A_inv*Bt;
-  auto U12 = null_operator(Et) - C_inv*Et;
-  auto U20 = null_operator(B);
-  auto U21 = null_operator(C);
-
-  const std::array<std::array<LinearOperator<LATrilinos::VectorType::BlockType>, 3 >, 3 > U_inv_array = {{
-      {{ L00  ,  null_operator(Z01)  , U02 }},
-      {{ null_operator(Z10)  ,  L11, U12 }},
-      {{ U20  ,  U21  , L22          }}
-    }
-  };
-  LinearOperator<LATrilinos::VectorType> U_inv_op =  block_operator<3, 3, LATrilinos::VectorType >(U_inv_array);
-
-
-  tempo =  double(clock() - inizio)/(double)CLOCKS_PER_SEC;
-  inizio = clock();
-
-  pcout << "u inv " << tempo << " seconds" << std::endl;
-
-
-  ///////////////////////////////////////////////////////////////
-
-  auto S1 = schur_complement(A_inv,Bt,B,Z22);
-  auto S2 = schur_complement(C_inv,Et,E,Z22);
-
-  /* LinearOperator<LATrilinos::VectorType::BlockType> S1 = B*A_inv*Bt; */
-  /* LinearOperator<LATrilinos::VectorType::BlockType> S2 = E*C_inv*Et; */
-  /* S1 *= -1.0; */
-  /* S2 *= -1.0; */
-
-  /* auto S1_inv = inverse_operator(S2, solver_CG, *p_prec); */
-  /* auto S2_inv = inverse_operator(S2, solver_CG, *p_prec); */
-
-  auto C_lumped_inv = inverse_operator(C_lumped, solver_c_lumped, *p_prec_ssor);
-  //   auto C_lumped_inv = inverse_operator(C_lumped, solver_c_lumped, *c_prec);
-  /* auto A_lumped_inv = inverse_operator(A_lumped,solver_CG_it, *U_prec); */
-
-  auto S2_approx = schur_complement(C_lumped_inv,Et,E,Z22);
-  auto S_approx = S1 + S2_approx;
-  //   auto S_approx =null_operator(E)- B*A_lumped_inv*Bt - E*C_lumped_inv*Et;
-
-  auto S = S1 + S2;
-  //  auto S_prec = P2_i;
-
-
-
-  static IterationNumberControl schur_control_approx(it_s_approx);
-  static IterationNumberControl schur_control(it_s);
-
-  // static SolverBicgstab<LATrilinos::VectorType::BlockType> solver_schur_approx(schur_control_approx);
-
-  static SolverFGMRES<LATrilinos::VectorType::BlockType> solver_schur_approx(schur_control_approx);
-
-  static SolverFGMRES<LATrilinos::VectorType::BlockType> solver_schur(schur_control);
-  // static SolverBicgstab<LATrilinos::VectorType::BlockType> solver_schur(schur_control);
-
-
-  tempo =  double(clock() - inizio)/(double)CLOCKS_PER_SEC;
-  inizio = clock();
-
-  pcout << "definizione di schur " << tempo << " seconds" << std::endl;
-
-
-
-  auto S_approx_inv = inverse_operator(S1, solver_schur_approx, *p_prec_ssor);
-  tempo =  double(clock() - inizio)/(double)CLOCKS_PER_SEC;
-  inizio = clock();
-
-  pcout << "S approx inv " << tempo << " seconds" << std::endl;
-
-
-
-
-  static  LinearOperator<LATrilinos::VectorType::BlockType> S_preconditioner;
-
-  S_preconditioner       = S_approx_inv;
-
-
-
-
-  auto S_inv = inverse_operator(S, solver_schur, S_preconditioner);
-  tempo =  double(clock() - inizio)/(double)CLOCKS_PER_SEC;
-  inizio = clock();
-
-
-  
-  pcout << "S  inv " << tempo << " seconds" << std::endl;
-
-
-
-  const std::array<LinearOperator<LATrilinos::VectorType::BlockType>, 3 > diagonal_array = {{ P0_i, P1_i, S_inv }};
-
-
-  LinearOperator<LATrilinos::VectorType> D_inv_op = block_diagonal_operator<3,LATrilinos::VectorType>(diagonal_array);
-
-  tempo =  double(clock() - inizio)/(double)CLOCKS_PER_SEC;
-  inizio = clock();
-
-  pcout << "D inv " << tempo << " seconds" << std::endl;
-
-
-  /* BlockLinearOperator<LATrilinos::VectorType> M = block_operator<3,3,LATrilinos::VectorType>({{ */
-  /* 	{{ A   , Z01 ,  Bt  }}, */
-  /* 	  {{ Z10 ,   C ,  Et  }}, */
-  /* 	    {{ B   ,   E ,  Z22 }} */
-  /*     } */
-  /*   }); */
-  
-  /* BlockLinearOperator<LATrilinos::VectorType> diag_inv = */
-  /*   block_diagonal_operator<3,LATrilinos::VectorType>({{P0_i,P1_i,S_inv}}); */
-  
-  /* prec_op = block_back_substitution(M, diag_inv); */
-
-  prec_op = U_inv_op*D_inv_op*L_inv_op;
-
-  tempo =  double(clock() - inizio)/(double)CLOCKS_PER_SEC;
-  inizio = clock();
-
-  (void)tempo;
-
-  pcout << "prodotto " << tempo << " seconds" << std::endl;
-
-  //  pcout << "TOTALE  " << double(clock() - totale)/(double)CLOCKS_PER_SEC << std::endl;
-//prec_op = U_inv_op;
-//  prec_op = L_inv_op;
-// prec_op = D_inv_op;
+  pcout << "prec_op " << tempo << " seconds" << std::endl;
 
 }
 

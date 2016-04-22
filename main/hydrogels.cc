@@ -1,6 +1,7 @@
 #include "interfaces/hydrogels_one_field.h"
 #include "interfaces/hydrogels_two_fields_transient.h"
 #include "interfaces/hydrogels_three_fields.h"
+#include "interfaces/hydrogels_three_fields_one_block.h"
 #include "pidomus.h"
 
 #include "deal.II/base/numbers.h"
@@ -166,6 +167,14 @@ int main (int argc, char *argv[])
           else if (pde_name == "three-fields")
             {
               HydroGelThreeFields<3,3,LATrilinos> gel;
+              piDoMUS<3,3,LATrilinos> solver ("piDoMUS", gel);
+              ParameterAcceptor::initialize(prm_file, pde_name+"_used.prm");
+              ParameterAcceptor::prm.log_parameters(deallog);
+              solver.run ();
+            }
+	  else if (pde_name == "three-fields-one-block")
+            {
+              HydroGelThreeFieldsOneBlock<3,3,LATrilinos> gel;
               piDoMUS<3,3,LATrilinos> solver ("piDoMUS", gel);
               ParameterAcceptor::initialize(prm_file, pde_name+"_used.prm");
               ParameterAcceptor::prm.log_parameters(deallog);
