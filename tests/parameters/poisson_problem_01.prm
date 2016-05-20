@@ -1,8 +1,8 @@
 # Parameter file generated with 
 # D2K_GIT_BRANCH=       master
-# D2K_GIT_SHORTREV=     bedec02
-# DEAL_II_GIT_BRANCH=   pdsolution-transfer
-# DEAL_II_GIT_SHORTREV= fe83377
+# D2K_GIT_SHORTREV=     fc320d8
+# DEAL_II_GIT_BRANCH=   master
+# DEAL_II_GIT_SHORTREV= 372f54d
 subsection Dirichlet boundary conditions
   set IDs and component masks = 0=ALL
   set IDs and expressions     = 
@@ -10,19 +10,23 @@ subsection Dirichlet boundary conditions
   set Used constants          = 
 end
 subsection Domain
-  set Colorize                   = false
-  set Grid to generate           = rectangle
-  set Input grid file name       = 
-  set Mesh smoothing alogrithm   = none
-  set Optional Point<spacedim> 1 = 1,2,7
-  set Optional Point<spacedim> 2 = 3,4,1
-  set Optional double 1          = 1.0
-  set Optional double 2          = 0.5
-  set Optional double 3          = 1.5
-  set Optional int 1             = 1
-  set Optional int 2             = 2
-  set Optional vector of dim int = 1,1
-  set Output grid file name      = 
+  set Colorize                      = false
+  set Copy boundary to manifold ids = false
+  set Copy material to manifold ids = false
+  set Create default manifolds      = true
+  set Grid to generate              = rectangle
+  set Input grid file name          = 
+  set Manifold descriptors          = 
+  set Mesh smoothing alogrithm      = none
+  set Optional Point<spacedim> 1    = 1,2,7
+  set Optional Point<spacedim> 2    = 3,4,1
+  set Optional double 1             = 1.0
+  set Optional double 2             = 0.5
+  set Optional double 3             = 1.5
+  set Optional int 1                = 1
+  set Optional int 2                = 2
+  set Optional vector of dim int    = 1,1
+  set Output grid file name         = 
 end
 subsection Error Tables
   set Compute error            = true
@@ -72,16 +76,19 @@ subsection IDA Solver Parameters
 end
 subsection IMEX Parameters
   set Absolute error tolerance                     = 1e-6
-  set Final time                                   = 0.
+  set Final time                                   = 1.
   set Initial time                                 = 0.
   set Intervals between outputs                    = 1
   set Maximum number of inner nonlinear iterations = 3
   set Maximum number of outer nonlinear iterations = 5
+  set Method used                                  = fixed_alpha
   set Newton relaxation parameter                  = 1.000000
+  set Number of elements in backtracking sequence  = 5
+  set Print useful informations                    = false
   set Relative error tolerance                     = 0.000000
-  set Step size                                    = 1e10
+  set Step size                                    = 1e-3
   set Update continuously Jacobian                 = true
-  set Norm used for non linear iterations          = l2
+  set Use the KINSOL solver                        = true
 end
 subsection Initial solution
   set Function constants  = 
@@ -92,6 +99,15 @@ subsection Initial solution_dot
   set Function constants  = 
   set Function expression = 0
   set Variable names      = x,y,z,t
+end
+subsection KINSOL for IMEX
+  set Level of verbosity of the KINSOL solver            = 0
+  set Maximum number of iteration before Jacobian update = 10
+  set Maximum number of iterations                       = 200
+  set Step tolerance                                     = 1e-11
+  set Strategy                                           = newton
+  set Tolerance for residuals                            = 1e-9
+  set Use internal KINSOL direct solver                  = false
 end
 subsection Neumann boundary conditions
   set IDs and component masks = 
@@ -126,15 +142,27 @@ subsection Time derivative of Dirichlet boundary conditions
   set Known component names   = u
   set Used constants          = 
 end
+subsection Zero average constraints
+  set Known component names        = u
+  set Zero average on boundary     = 
+  set Zero average on whole domain = 
+end
 subsection pidomus
   set Adaptive refinement                            = true
-  set Initial global refinement                      = 1
-  set Maximum number of time steps                   = 10000
+  set Enable finer preconditioner                    = false
+  set Initial global refinement                      = 3
   set Jacobian solver tolerance                      = 1e-8
+  set Max iterations                                 = 50
+  set Max iterations finer prec.                     = 0
+  set Maximum number of time steps                   = 10000
   set Number of cycles                               = 1
   set Overwrite Newton's iterations                  = true
   set Print some useful informations about processes = true
-  set Time stepper                                   = euler
+  set Refine mesh during transient                   = false
+  set Resume computation from a snapshot             = true
   set Show timer                                     = false
+  set Snapshot folder                                = snapshots
+  set Threshold for solver's restart                 = 1e-2
+  set Time stepper                                   = euler
   set Use direct solver if available                 = true
 end

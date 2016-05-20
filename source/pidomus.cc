@@ -907,7 +907,9 @@ void piDoMUS<dim, spacedim, LAC>::run ()
       constraints_dot.distribute(solution_dot);
 
       if (time_stepper == "ida")
+        {
         ida.start_ode(solution, solution_dot, max_time_iterations);
+        }
       else if (time_stepper == "euler")
         {
           current_alpha = euler.get_alpha();
@@ -1547,7 +1549,10 @@ void piDoMUS<dim,spacedim,LAC>::resume_from_snapshot()
 
   try
     {
+    triangulation = SP(pgg.distributed(comm));
       triangulation->load ((snapshot_folder + "restart.mesh").c_str());
+      dof_handler = SP(new DoFHandler<dim, spacedim>(*triangulation));
+        fe = SP(interface.pfe());
     }
   catch (...)
     {
@@ -1568,7 +1573,7 @@ void piDoMUS<dim,spacedim,LAC>::resume_from_snapshot()
   try
     {
 #ifdef DEAL_II_WITH_ZLIB
-      std::ifstream ifs ((snapshot_folder + "restart.resume.z").c_str());
+      std::ifstream ifs ((snapshot_folder + "restart.resume.z.old").c_str());
       AssertThrow(ifs.is_open(),
                   ExcMessage("Cannot open snapshot resume file."));
 
