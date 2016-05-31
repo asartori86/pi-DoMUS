@@ -1,9 +1,7 @@
 #include "pidomus.h"
-#include "interfaces/poisson_problem_signals.h"
+#include "interfaces/poisson_problem.h"
 #include "tests.h"
 
-
-// test that we can write snapshots
 using namespace dealii;
 int main (int argc, char *argv[])
 {
@@ -12,7 +10,6 @@ int main (int argc, char *argv[])
                                                       numbers::invalid_unsigned_int);
 
   MPILogInitAll log;
-  deallog.depth_file(1);
 
   deallog.depth_file(1);
   const int dim = 2;
@@ -28,7 +25,6 @@ int main (int argc, char *argv[])
   deallog.depth_file(10);
 
   deallog << "OK" << std::endl;
-
 
   return 0;
 }

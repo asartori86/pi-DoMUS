@@ -44,11 +44,11 @@ using namespace deal2lkit;
 template <int dim, int spacedim, typename LAC>
 piDoMUS<dim, spacedim, LAC>::piDoMUS (const std::string &name,
                                       const BaseInterface<dim, spacedim, LAC> &interface,
-                                      const MPI_Comm &communicator)
+                                      const MPI_Comm communicator)
   :
   ParameterAcceptor(name),
   SundialsInterface<typename LAC::VectorType>(communicator),
-  comm(communicator),
+  comm(Utilities::MPI::duplicate_communicator(communicator)),
   interface(interface),
   pcout (std::cout,
          (Utilities::MPI::this_mpi_process(comm)
