@@ -56,11 +56,14 @@ private:
   double rho2;
   double eta1;
   double eta2;
+  double eps;
+  double M0;
 
-  double He(const double x) const
+  template <typename Number>
+  Number He(const Number x) const
   {
-      double ret;
-      ret = 0.5*(1. + std::tanh(x/0.1));
+      Number ret;
+      ret = 0.5*(1. + std::tanh(x/eps));
       return ret;
   }
 };
@@ -109,6 +112,8 @@ energies_and_residuals(const typename DoFHandler<dim>::active_cell_iterator &cel
     auto &mus = fe_cache.get_values("solution", "mu", aux, alpha);
     auto &grad_mus = fe_cache.get_gradients("solution", "mu", aux, alpha);
 
+    double dd;
+    auto &us_expl = fe_cache.get_values("explicit_solution", "velocity", velocity, dd);
 
     const unsigned int n_q_points = cs.size();
 
@@ -133,8 +138,12 @@ energies_and_residuals(const typename DoFHandler<dim>::active_cell_iterator &cel
         // f_prime = df/dc
         ResidualType f_prime = 200.*(c-1.)*(c-1.)*c + 200.*(c-1.)*c*c;
 
-        double rho = (rho1 - rho2)*He(SacadoTools::to_double(c)-0.5)+rho2;
-        double eta = (eta1 - eta2)*He(SacadoTools::to_double(c)-0.5)+eta2;
+//        ResidualType c_half = c-0.5;
+//        ResidualType rho = (rho1 - rho2)*He(c_half)+rho2;
+//        ResidualType eta = (eta1 - eta2)*He(c_half)+eta2;
+        double c_half = SacadoTools::to_double(c)-0.5;
+        double rho = (rho1 - rho2)*He(c_half)+rho2;
+        double eta = (eta1 - eta2)*He(c_half)+eta2;
 
         for (unsigned int i=0; i<local_residuals[0].size(); ++i)
           {
@@ -147,13 +156,15 @@ energies_and_residuals(const typename DoFHandler<dim>::active_cell_iterator &cel
             local_residuals[0][i] += (
                                        c_dot*test_c
                                        +
-                                       SacadoTools::scalar_product(grad_mu,grad_test_c)
+                                       M0*(SacadoTools::scalar_product(grad_mu,grad_test_c))
                                        +
                                        mu*test_mu
                                        -
-                                       f_prime*test_mu
-                                       -
-                                       lambda*SacadoTools::scalar_product(grad_c,grad_test_mu)
+(3./2.)*eps*(SacadoTools::scalar_product(grad_c,grad_test_mu))
+                  -(24./eps)*(c*(1.-c)*(1.-2.*c))*test_mu
+
+                  +SacadoTools::scalar_product(grad_c,us_expl[q])*test_c
+
                                      )*JxW[q];
 
             // NS
@@ -167,8 +178,8 @@ energies_and_residuals(const typename DoFHandler<dim>::active_cell_iterator &cel
             ResidualType r =
             (
                                     rho*us_dot[q]*test_v
-				    /* +
-				       rho*(SacadoTools::scalar_product((grad_us[q]*us[q]),test_v))*/
+                                    /*+
+                                       rho*(SacadoTools::scalar_product((grad_us[q]*us[q]),test_v)) */
                                     +
                                     eta*(scalar_product(sym_grad_us[q],sym_grad_test_v))
                                     -
@@ -195,7 +206,9 @@ void TwoPhaseFlow<dim,LAC>::declare_parameters (ParameterHandler &prm)
   this->add_parameter(prm, &rho1, "rho 1", "1.0", Patterns::Double(0.0));
   this->add_parameter(prm, &rho2, "rho 2", "1.0", Patterns::Double(0.0));
   this->add_parameter(prm, &eta1, "eta 1", "1.0", Patterns::Double(0.0));
-  this->add_parameter(prm, &rho2, "eta 2", "1.0", Patterns::Double(0.0));
+  this->add_parameter(prm, &eta2, "eta 2", "1.0", Patterns::Double(0.0));
+  this->add_parameter(prm, &eps, "eps", "0.1", Patterns::Double(0.0));
+  this->add_parameter(prm, &M0, "M0", "1", Patterns::Double(0.0));
 
 }
 
