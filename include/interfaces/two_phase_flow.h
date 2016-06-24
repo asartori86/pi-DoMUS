@@ -66,6 +66,13 @@ private:
       ret = 0.5*(1. + std::tanh(x/eps));
       return ret;
   }
+
+  double smooth(const double n1, const double n2, const double c) const
+  {
+    double c_half = c-0.5;
+    double n = (n1 - n2)*He(c_half)+n2;
+    return n;
+  }
 };
 
 template <int dim, typename LAC>
@@ -114,6 +121,7 @@ energies_and_residuals(const typename DoFHandler<dim>::active_cell_iterator &cel
 
     double dd;
     auto &us_expl = fe_cache.get_values("explicit_solution", "velocity", velocity, dd);
+    auto &cs_expl = fe_cache.get_values("explicit_solution", "conc", concentration, dd);
 
     const unsigned int n_q_points = cs.size();
 
@@ -134,16 +142,8 @@ energies_and_residuals(const typename DoFHandler<dim>::active_cell_iterator &cel
 
         const ResidualType &c_dot = cs_dot[q];
 
-        // f = 100*c^2*(1-c)^2
-        // f_prime = df/dc
-        ResidualType f_prime = 200.*(c-1.)*(c-1.)*c + 200.*(c-1.)*c*c;
-
-//        ResidualType c_half = c-0.5;
-//        ResidualType rho = (rho1 - rho2)*He(c_half)+rho2;
-//        ResidualType eta = (eta1 - eta2)*He(c_half)+eta2;
-        double c_half = SacadoTools::to_double(c)-0.5;
-        double rho = (rho1 - rho2)*He(c_half)+rho2;
-        double eta = (eta1 - eta2)*He(c_half)+eta2;
+        double rho = smooth(rho1, rho2, SacadoTools::to_double(c));
+        double eta = smooth(eta1, eta2, SacadoTools::to_double(c));
 
         for (unsigned int i=0; i<local_residuals[0].size(); ++i)
           {
@@ -170,18 +170,32 @@ energies_and_residuals(const typename DoFHandler<dim>::active_cell_iterator &cel
             // NS
             auto test_v = fev[velocity].value(i,q);
             auto sym_grad_test_v = fev[velocity].symmetric_gradient(i,q);
+            auto grad_test_v = fev[velocity].gradient(i,q);
             auto div_test_v = fev[velocity].divergence(i,q);
 
             auto test_p = fev[pressure].value(i,q);
 //            auto grad_test_p = fev[pressure].gradient(i,q);
 
+            double rho_expl = smooth(rho1, rho2, SacadoTools::to_double(cs_expl[q]));
+
+            double alpha = this->get_alpha();
+
+            const Tensor<1,dim,ResidualType> nl1 = grad_us[q]*us_expl[q];
+            const Tensor<1,dim,ResidualType> nl2 = grad_test_v*us_expl[q];
+
             ResidualType r =
             (
+//                                    std::sqrt(rho)*(std::sqrt(rho)*us[q] - std::sqrt(rho_expl)*us_expl[q])*alpha*test_v
                                     rho*us_dot[q]*test_v
                                     /*+
                                        rho*(SacadoTools::scalar_product((grad_us[q]*us[q]),test_v)) */
                                     +
                                     eta*(scalar_product(sym_grad_us[q],sym_grad_test_v))
+
+                                    +
+                                    0.5*rho*scalar_product(nl1,test_v)
+                                    -
+                                    0.5*rho*scalar_product(nl2,us[q])
                                     -
                                     ps[q]*div_test_v
                                     -

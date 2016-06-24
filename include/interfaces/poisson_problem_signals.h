@@ -35,10 +35,11 @@ public:
     auto &signals = this->get_signals();
 
     // we can connect calling .connect( and defining a lambda
-    signals.fix_initial_conditions.connect(
-      [this](typename LAC::VectorType &, typename LAC::VectorType &)
+    signals.update_constraint_matrices.connect(
+      [this](ConstraintMatrix &cm, ConstraintMatrix &)
     {
-      std::cout << "ciao mondo" << std::endl;
+      // all your code
+      Function<dim>(n_components);
     }
     );
 

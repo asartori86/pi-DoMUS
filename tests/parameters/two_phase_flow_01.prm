@@ -95,7 +95,7 @@ subsection IMEX Parameters
 end
 subsection Initial solution
   set Function constants  = 
-  set Function expression = 0; 0; 0; x; 0
+  set Function expression = 0; 0; 0; ((x-0.5)^2 + (y-0.5)^2)<0.03?0:5; 0
   set Variable names      = x,y,t
 end
 subsection Initial solution_dot
@@ -108,7 +108,7 @@ subsection KINSOL for IMEX
   set Maximum number of iteration before Jacobian update = 10
   set Maximum number of iterations                       = 20
   set Step tolerance                                     = 1e-11
-  set Strategy                                           = newton
+  set Strategy                                           = global_newton
   set Tolerance for residuals                            = 1e-9
   set Use internal KINSOL direct solver                  = false
 end
@@ -148,8 +148,8 @@ subsection Two phase flows
   set eps                              = 0.1
   set eta 1                            = 1
   set eta 2                            = 1
-  set rho 1                            = 5.
-  set rho 2                            = 1.
+  set rho 1                            = 1.
+  set rho 2                            = 5.
 end
 subsection Zero average constraints
   set Known component names        = u,u,p,c,mu
