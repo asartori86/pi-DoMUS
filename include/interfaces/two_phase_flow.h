@@ -22,15 +22,16 @@
 #include <time.h>
 
 
+using namespace SacadoTools;
 
 template <int dim, typename LAC>
-class TwoPhaseFlow : public PDESystemInterface<dim, dim, TwoPhaseFlow<dim,LAC>, LAC>
+class ThreePhaseFlow : public PDESystemInterface<dim, dim, ThreePhaseFlow<dim,LAC>, LAC>
 {
 public:
 
-  ~TwoPhaseFlow() {}
+  ~ThreePhaseFlow() {}
 
-  TwoPhaseFlow();
+  ThreePhaseFlow();
 
   void declare_parameters (ParameterHandler &prm);
 
@@ -54,10 +55,22 @@ private:
     const double lambda = 1.0e-2;
   double rho1;
   double rho2;
+  double rho3;
   double eta1;
   double eta2;
+  double eta3;
   double eps;
   double M0;
+  double sigma12;
+  double sigma13;
+  double sigma23;
+
+  double Sigma12;
+  double Sigma13;
+  double Sigma23;
+
+  double Lambda;
+
 
   template <typename Number>
   Number He(const Number x) const
@@ -73,21 +86,34 @@ private:
     double n = (n1 - n2)*He(c_half)+n2;
     return n;
   }
+
+  template <typename number>
+  double smooth(const double n1,
+                const double n2,
+                const double n3,
+                const number c1,
+                const number c2) const
+  {
+    double c1_half = to_double(c1)-0.5;
+    double c2_half = to_double(c2)-0.5;
+    double n = (n1 - n3)*He(c1_half)+(n2-n3)*He(c2_half)+n3;
+    return n;
+  }
 };
 
 template <int dim, typename LAC>
-TwoPhaseFlow<dim,LAC>::TwoPhaseFlow() :
-  PDESystemInterface<dim, dim, TwoPhaseFlow<dim,LAC>, LAC>("Two phase flows",
-                                                     dim+3,1,
-                                                     "FESystem[FE_Q(2)^d-FE_Q(1)-FE_Q(1)-FE_Q(1)]",
-                                                     "u,u,p,c,mu","1,0,1,0")
+ThreePhaseFlow<dim,LAC>::ThreePhaseFlow() :
+  PDESystemInterface<dim, dim, ThreePhaseFlow<dim,LAC>, LAC>("Three phase flows",
+                                                     dim+5,1,
+                                                     "FESystem[FE_Q(2)^d-FE_Q(1)-FE_Q(1)^3-FE_Q(1)]",
+                                                     "u,u,p,c1,c2,c3,mu","1,0,1,1,1,0")
 {}
 
 
 template <int dim, typename LAC>
 template <typename EnergyType, typename ResidualType>
 void
-TwoPhaseFlow<dim,LAC>::
+ThreePhaseFlow<dim,LAC>::
 energies_and_residuals(const typename DoFHandler<dim>::active_cell_iterator &cell,
                        FEValuesCache<dim> &fe_cache,
                        std::vector<EnergyType> &,
@@ -99,8 +125,10 @@ energies_and_residuals(const typename DoFHandler<dim>::active_cell_iterator &cel
 
     const FEValuesExtractors::Vector velocity(0);
     const FEValuesExtractors::Scalar pressure(dim);
-    const FEValuesExtractors::Scalar concentration(dim+1);
-    const FEValuesExtractors::Scalar aux(dim+2);
+    const FEValuesExtractors::Scalar c1(dim+1);
+    const FEValuesExtractors::Scalar c2(dim+2);
+    const FEValuesExtractors::Scalar c3(dim+3);
+    const FEValuesExtractors::Scalar aux(dim+4);
 
 
     auto &us_dot = fe_cache.get_values("solution_dot", "velocity", velocity, alpha);
@@ -112,18 +140,26 @@ energies_and_residuals(const typename DoFHandler<dim>::active_cell_iterator &cel
     auto &ps = fe_cache.get_values("solution", "p", pressure, alpha);
 //    auto &grad_ps = fe_cache.get_gradients("solution", "p", pressure, alpha);
 
-    auto &cs_dot = fe_cache.get_values("solution_dot", "c", concentration, alpha);
-    auto &cs = fe_cache.get_values("solution", "c", concentration, alpha);
-    auto &grad_cs = fe_cache.get_gradients("solution", "c", concentration, alpha);
+    auto &c1s_dot = fe_cache.get_values("solution_dot", "c", c1, alpha);
+    auto &c1s = fe_cache.get_values("solution", "c", c1, alpha);
+    auto &grad_c1s = fe_cache.get_gradients("solution", "c", c1, alpha);
+
+    auto &c2s_dot = fe_cache.get_values("solution_dot", "c", c2, alpha);
+    auto &c2s = fe_cache.get_values("solution", "c", c2, alpha);
+    auto &grad_c2s = fe_cache.get_gradients("solution", "c", c2, alpha);
+
+    auto &c3s_dot = fe_cache.get_values("solution_dot", "c", c3, alpha);
+    auto &c3s = fe_cache.get_values("solution", "c", c3, alpha);
+    auto &grad_c3s = fe_cache.get_gradients("solution", "c", c3, alpha);
 
     auto &mus = fe_cache.get_values("solution", "mu", aux, alpha);
     auto &grad_mus = fe_cache.get_gradients("solution", "mu", aux, alpha);
 
     double dd;
     auto &us_expl = fe_cache.get_values("explicit_solution", "velocity", velocity, dd);
-    auto &cs_expl = fe_cache.get_values("explicit_solution", "conc", concentration, dd);
+    auto &c1s_expl = fe_cache.get_values("explicit_solution", "conc", c1, dd);
 
-    const unsigned int n_q_points = cs.size();
+    const unsigned int n_q_points = c1s.size();
 
     auto &JxW = fe_cache.get_JxW_values();
     auto &fev = fe_cache.get_current_fe_values();
@@ -133,28 +169,40 @@ energies_and_residuals(const typename DoFHandler<dim>::active_cell_iterator &cel
 
     for (unsigned int q=0; q<n_q_points; ++q)
       {
-        const ResidualType &c = cs[q];
+        const ResidualType &c1 = c1s[q];
+        const ResidualType &c2 = c2s[q];
+        const ResidualType &c3 = c3s[q];
         const ResidualType &mu = mus[q];
 
-        const Tensor<1,dim,ResidualType> &grad_c = grad_cs[q];
+        const Tensor<1,dim,ResidualType> &grad_c1 = grad_c1s[q];
+        const Tensor<1,dim,ResidualType> &grad_c2 = grad_c2s[q];
+        const Tensor<1,dim,ResidualType> &grad_c3 = grad_c3s[q];
         const Tensor<1,dim,ResidualType> &grad_mu = grad_mus[q];
 
+        const ResidualType &c1_dot = c1s_dot[q];
+        const ResidualType &c2_dot = c2s_dot[q];
+        const ResidualType &c3_dot = c3s_dot[q];
 
-        const ResidualType &c_dot = cs_dot[q];
-
-        double rho = smooth(rho1, rho2, SacadoTools::to_double(c));
-        double eta = smooth(eta1, eta2, SacadoTools::to_double(c));
+        double rho = smooth(rho1, rho2, rho3, c1, c2);
+        double eta = smooth(eta1, eta2, eta3, c1, c2);
 
         for (unsigned int i=0; i<local_residuals[0].size(); ++i)
           {
             // cahn-hilliard
-            auto test_c = fev[concentration].value(i,q);
-            auto grad_test_c = fev[concentration].gradient(i,q);
+            auto test_c1 = fev[c1].value(i,q);
+            auto test_c2 = fev[c2].value(i,q);
+            auto test_c3 = fev[c3].value(i,q);
+
+            auto grad_test_c1 = fev[c1].gradient(i,q);
+            auto grad_test_c2 = fev[c2].gradient(i,q);
+            auto grad_test_c3 = fev[c3].gradient(i,q);
 
             auto test_mu = fev[aux].value(i,q);
             auto grad_test_mu = fev[aux].gradient(i,q);
+
             local_residuals[0][i] += (
-                                       c_dot*test_c
+                  c1_dot*test_c1
+                  +
                                        +
                                        M0*(SacadoTools::scalar_product(grad_mu,grad_test_c))
                                        +
@@ -176,7 +224,7 @@ energies_and_residuals(const typename DoFHandler<dim>::active_cell_iterator &cel
             auto test_p = fev[pressure].value(i,q);
 //            auto grad_test_p = fev[pressure].gradient(i,q);
 
-            double rho_expl = smooth(rho1, rho2, SacadoTools::to_double(cs_expl[q]));
+            double rho_expl = smooth(rho1, rho2, SacadoTools::to_double(c1s_expl[q]));
 
             double alpha = this->get_alpha();
 
@@ -213,9 +261,9 @@ energies_and_residuals(const typename DoFHandler<dim>::active_cell_iterator &cel
 }
 
 template <int dim, typename LAC>
-void TwoPhaseFlow<dim,LAC>::declare_parameters (ParameterHandler &prm)
+void ThreePhaseFlow<dim,LAC>::declare_parameters (ParameterHandler &prm)
 {
-  PDESystemInterface<dim, dim, TwoPhaseFlow<dim,LAC>, LAC>::declare_parameters(prm);
+  PDESystemInterface<dim, dim, ThreePhaseFlow<dim,LAC>, LAC>::declare_parameters(prm);
 
   this->add_parameter(prm, &rho1, "rho 1", "1.0", Patterns::Double(0.0));
   this->add_parameter(prm, &rho2, "rho 2", "1.0", Patterns::Double(0.0));
