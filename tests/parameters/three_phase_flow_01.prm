@@ -1,16 +1,17 @@
+
 # Parameter file generated with 
 # D2K_GIT_BRANCH=       silenzio
 # D2K_GIT_SHORTREV=     8524be0
 # DEAL_II_GIT_BRANCH=   master
 # DEAL_II_GIT_SHORTREV= eb652bf
 subsection Dirichlet boundary conditions
-  set IDs and component masks = 
+  set IDs and component masks = 0=u % 1 =u % 2=u #% 3=u
   set IDs and expressions     = 
-  set Known component names   = u,u,p,c1,c2,c3,mu1,mu2,mu3
+  set Known component names   = u,u,p,c1,mu1
   set Used constants          = 
 end
 subsection Domain
-  set Colorize                      = false
+  set Colorize                      = true
   set Copy boundary to manifold ids = false
   set Copy material to manifold ids = false
   set Create default manifolds      = true
@@ -19,13 +20,13 @@ subsection Domain
   set Manifold descriptors          = 
   set Mesh smoothing alogrithm      = none
   set Optional Point<spacedim> 1    = 0,0
-  set Optional Point<spacedim> 2    = 1,4
+  set Optional Point<spacedim> 2    = 1,1
   set Optional double 1             = 1.0
   set Optional double 2             = 0.5
   set Optional double 3             = 1.5
   set Optional int 1                = 1
   set Optional int 2                = 2
-  set Optional vector of dim int    = 1,4
+  set Optional vector of dim int    = 1,1
   set Output grid file name         = 
 end
 subsection Error Tables
@@ -33,36 +34,36 @@ subsection Error Tables
   set Error file format        = tex
   set Error precision          = 3
   set Output error tables      = true
-  set Solution names           = u,u,p,c1,c2,c3,mu1,mu2,mu3
-  set Solution names for latex = u,u,p,c1,c2,c3,mu1,mu2,mu3
+  set Solution names           = u,u,p,c1,mu1
+  set Solution names for latex = u,u,p,c1,mu1
   set Table names              = error
   set Write error files        = false
   subsection Table 0
     set Add convergence rates          = true
     set Extra terms                    = cells,dofs
     set Latex table caption            = error
-    set List of error norms to compute = L2,H1;L2,H1;L2,H1;L2,H1;L2,H1;L2,H1;L2,H1;L2,H1;L2,H1
+    set List of error norms to compute = L2,H1;L2,H1;L2,H1;L2,H1;L2,H1
     set Rate key                       = 
   end
 end
 subsection Exact solution
   set Function constants  = 
-  set Function expression = 0; 0; 0; 0; 0; 0; 0; 0; 0
+  set Function expression = 0; 0; 0; 0; 0
   set Variable names      = x,y,t
 end
 subsection Forcing terms
   set IDs and component masks = 
   set IDs and expressions     = 
-  set Known component names   = u,u,p,c1,c2,c3,mu1,mu2,mu3
+  set Known component names   = u,u,p,c1,mu1
   set Used constants          = 
 end
 subsection IDA Solver Parameters
   set Absolute error tolerance                      = 1e-4
   set Final time                                    = 1
-  set Ignore algebraic terms for error computations = false
+  set Ignore algebraic terms for error computations = true
   set Initial condition Newton max iterations       = 5
   set Initial condition Newton parameter            = 0.33
-  set Initial condition type                        = none
+  set Initial condition type                        = use_y_diff
   set Initial condition type after restart          = use_y_dot
   set Initial step size                             = 1e-4
   set Initial time                                  = 0
@@ -70,7 +71,7 @@ subsection IDA Solver Parameters
   set Maximum order of BDF                          = 5
   set Min step size                                 = 5e-5
   set Relative error tolerance                      = 1e-3
-  set Seconds between each output                   = 1e-1
+  set Seconds between each output                   = 1e-3
   set Show output of time steps                     = true
   set Use local tolerances                          = false
 end
@@ -92,12 +93,12 @@ subsection IMEX Parameters
 end
 subsection Initial solution
   set Function constants  = 
-  set Function expression = 0; 0; 0; ((x-0.5)^2+(y-2)^2>0.1 && y<2?1:0); ((x-0.5)^2+(y-2)^2<0.1?1:0); ((x-0.5)^2+(y-2)^2>0.1 && y>2?1:0); 0; 0; 0
+  set Function expression = 0; 0; 0; x; 0
   set Variable names      = x,y,t
 end
 subsection Initial solution_dot
   set Function constants  = 
-  set Function expression = 0; 0; 0; 0; 0; 0; 0; 0; 0
+  set Function expression = 0; 0; 0; 0; 0
   set Variable names      = x,y,t
 end
 subsection KINSOL for IMEX
@@ -112,7 +113,7 @@ end
 subsection Neumann boundary conditions
   set IDs and component masks = 
   set IDs and expressions     = 
-  set Known component names   = u,u,p,c1,c2,c3,mu1,mu2,mu3
+  set Known component names   = u,u,p,c1,mu1
   set Used constants          = 
 end
 subsection Output Parameters
@@ -120,9 +121,9 @@ subsection Output Parameters
   set Incremental run prefix         = 
   set Output format                  = vtu
   set Output partitioning            = false
-  set Problem base name              = three
+  set Problem base name              = as_one
   set Solution names                 = u
-  set Subdivisions                   = 2
+  set Subdivisions                   = 1
 end
 subsection Refinement
   set Bottom fraction                        = 0.100000
@@ -132,9 +133,9 @@ subsection Refinement
   set Top fraction                           = 0.300000
 end
 subsection Three phase flows
-  set Block of differential components = 1,0,1,1,1,0,0,0
-  set Blocking of the finite element   = u,u,p,c1,c2,c3,mu1,mu2,mu3
-  set Finite element space             = FESystem[FE_Q(2)^d-FE_Q(1)-FE_Q(1)-FE_Q(1)-FE_Q(1)-FE_Q(1)-FE_Q(1)-FE_Q(1)]
+  set Block of differential components = 1,0,1,0
+  set Blocking of the finite element   = u,u,p,c1,mu1
+  set Finite element space             = FESystem[FE_Q(2)^d-FE_Q(1)-FE_Q(1)-FE_Q(1)]
   set Lambda                           = 1
   set M0                               = 1
   set eps                              = 0.1
@@ -144,25 +145,25 @@ subsection Three phase flows
   set rho 1                            = 1.0
   set rho 2                            = 1.0
   set rho 3                            = 1.0
-  set sigma12                          = 1.4
+  set sigma12                          = 1
   set sigma13                          = 1
-  set sigma23                          = 0.8
+  set sigma23                          = 1
 end
 subsection Time derivative of Dirichlet boundary conditions
   set IDs and component masks = 
   set IDs and expressions     = 
-  set Known component names   = u,u,p,c1,c2,c3,mu1,mu2,mu3
+  set Known component names   = u,u,p,c1,mu1
   set Used constants          = 
 end
 subsection Zero average constraints
-  set Known component names        = u,u,p,c1,c2,c3,mu1,mu2,mu3
+  set Known component names        = u,u,p,c1,mu1
   set Zero average on boundary     = 
   set Zero average on whole domain = 
 end
 subsection pidomus
   set Adaptive refinement                            = true
   set Enable finer preconditioner                    = false
-  set Initial global refinement                      = 4
+  set Initial global refinement                      = 3
   set Jacobian solver tolerance                      = 1e-8
   set Max iterations                                 = 50
   set Max iterations finer prec.                     = 0
