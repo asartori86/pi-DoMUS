@@ -14,7 +14,7 @@ int main (int argc, char *argv[])
 
   const int dim = 2;
 
-  ThreePhaseFlow<dim,LADealII> f;
+  TwoPhaseFlow<dim,LADealII> f;
   piDoMUS<dim,dim,LADealII> solver ("pidomus",f);
   ParameterAcceptor::initialize(SOURCE_DIR "/parameters/two_phase_flow_01.prm", "used_parameters.prm");
 

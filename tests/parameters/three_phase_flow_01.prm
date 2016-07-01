@@ -87,13 +87,13 @@ subsection IMEX Parameters
   set Number of elements in backtracking sequence  = 5
   set Print useful informations                    = false
   set Relative error tolerance                     = 0.000000
-  set Step size                                    = 1e-2
+  set Step size                                    = 1e-4
   set Update continuously Jacobian                 = true
   set Use the KINSOL solver                        = true
 end
 subsection Initial solution
   set Function constants  = 
-  set Function expression = 0; 0; 0; x; 0
+  set Function expression = 0; 0; 0; x+y-0.5; 0
   set Variable names      = x,y,t
 end
 subsection Initial solution_dot
@@ -102,11 +102,11 @@ subsection Initial solution_dot
   set Variable names      = x,y,t
 end
 subsection KINSOL for IMEX
-  set Level of verbosity of the KINSOL solver            = 0
+  set Level of verbosity of the KINSOL solver            = 2
   set Maximum number of iteration before Jacobian update = 10
   set Maximum number of iterations                       = 200
   set Step tolerance                                     = 1e-11
-  set Strategy                                           = newton
+  set Strategy                                           = global_newton
   set Tolerance for residuals                            = 1e-9
   set Use internal KINSOL direct solver                  = false
 end
@@ -137,15 +137,15 @@ subsection Three phase flows
   set Blocking of the finite element   = u,u,p,c1,mu1
   set Finite element space             = FESystem[FE_Q(2)^d-FE_Q(1)-FE_Q(1)-FE_Q(1)]
   set Lambda                           = 1
-  set M0                               = 1
-  set eps                              = 0.1
+  set M0                               = 10
+  set eps                              = 0.05
   set eta 1                            = 1.0
   set eta 2                            = 1.0
   set eta 3                            = 1.0
-  set rho 1                            = 1.0
+  set rho 1                            = 50.0
   set rho 2                            = 1.0
   set rho 3                            = 1.0
-  set sigma12                          = 1
+  set sigma12                          = 1.4
   set sigma13                          = 1
   set sigma23                          = 1
 end
@@ -163,7 +163,7 @@ end
 subsection pidomus
   set Adaptive refinement                            = true
   set Enable finer preconditioner                    = false
-  set Initial global refinement                      = 3
+  set Initial global refinement                      = 4
   set Jacobian solver tolerance                      = 1e-8
   set Max iterations                                 = 50
   set Max iterations finer prec.                     = 0
@@ -177,7 +177,7 @@ subsection pidomus
   set Print some useful informations about processes = true
   set Refine mesh during transient                   = false
   set Threshold for solver's restart                 = 1e-2
-  set Time stepper                                   = ida
+  set Time stepper                                   = imex
   set Use direct solver if available                 = true
   set Which eigenvalues                              = smallest_real_part
 end
