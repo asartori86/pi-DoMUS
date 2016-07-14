@@ -184,6 +184,8 @@ refine_and_transfer_solutions(LADealII::VectorType &y,
 {
   signals.begin_refine_and_transfer_solutions();
   SolutionTransfer<dim, LADealII::VectorType, DoFHandler<dim,spacedim> > sol_tr(*dof_handler);
+static unsigned int ss =700;
+ss+=1;
 
   std::vector<LADealII::VectorType> old_sols (3);
   old_sols[0] = y;
@@ -204,6 +206,7 @@ refine_and_transfer_solutions(LADealII::VectorType &y,
     }
 
   setup_dofs(false);
+  output_step(current_time,y,y_dot,ss);
 
   std::vector<LADealII::VectorType> new_sols (3);
 
@@ -233,7 +236,7 @@ refine_and_transfer_solutions(LADealII::VectorType &y,
 
   locally_relevant_y = y;
   locally_relevant_y_dot = y_dot;
-
+output_step(current_time,y,y_dot,ss);
   signals.end_refine_and_transfer_solutions();
 }
 

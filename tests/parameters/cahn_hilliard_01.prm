@@ -68,7 +68,7 @@ subsection IDA Solver Parameters
   set Initial condition Newton max iterations       = 5
   set Initial condition Newton parameter            = 0.33
   set Initial condition type                        = use_y_diff
-  set Initial condition type after restart          = use_y_dot
+  set Initial condition type after restart          = use_y_diff
   set Initial step size                             = 1e-4
   set Initial time                                  = 0
   set Maximum number of nonlinear iterations        = 10
@@ -112,7 +112,7 @@ subsection Output Parameters
   set Incremental run prefix         = 
   set Output format                  = vtu
   set Output partitioning            = false
-  set Problem base name              = solution
+  set Problem base name              = aaaaaaaaaaaa
   set Solution names                 = u
   set Subdivisions                   = 2
 end
@@ -136,12 +136,12 @@ subsection Zero average constraints
 end
 subsection pidomus
   set Adaptive refinement                            = true
-  set Initial global refinement                      = 5
+  set Initial global refinement                      = 3
   set Jacobian solver tolerance                      = 1e-8
   set Number of cycles                               = 1
   set Overwrite Newton's iterations                  = true
   set Print some useful informations about processes = true
-  set Refine mesh during transient                   = false
+  set Refine mesh during transient                   = true
   set Threshold for solver's restart                 = 1e-2
   set Time stepper                                   = ida
   set Use direct solver if available                 = true

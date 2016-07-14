@@ -58,7 +58,7 @@ subsection Forcing terms
 end
 subsection IDA Solver Parameters
   set Absolute error tolerance                      = 1e-4
-  set Final time                                    = 0.1
+  set Final time                                    = 1
   set Ignore algebraic terms for error computations = false
   set Initial condition Newton max iterations       = 5
   set Initial condition Newton parameter            = 0.33
@@ -135,9 +135,9 @@ subsection Zero average constraints
   set Zero average on whole domain = 
 end
 subsection pidomus
-  set Adaptive refinement                            = true
-  set Initial global refinement                      = 1
-  set Jacobian solver tolerance                      = 1e-8
+  set Adaptive refinement                            = false
+  set Initial global refinement                      = 2
+  set Jacobian solver tolerance                      = 1e-7
   set Number of cycles                               = 1
   set Overwrite Newton's iterations                  = true
   set Print some useful informations about processes = true
