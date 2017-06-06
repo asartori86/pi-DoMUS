@@ -18,7 +18,7 @@ public:
   /* void parse_parameters_call_back (); */
 
 
-  virtual UpdateFlags get_update_flags() const
+  virtual UpdateFlags get_cell_update_flags() const
   {
     return (update_values             |
             update_gradients          |
@@ -127,18 +127,20 @@ EntanglementInterface():
       "u,u,u","1")
 {}
 
-namespace d2kinternal {
-    template <int dim, int spacedim, typename Number>
-    inline
-    Number determinant (const DerivativeForm<1,dim,spacedim,Number> &DF) {
-        const DerivativeForm<1,spacedim,dim,Number> DF_t = DF.transpose();
-        Tensor<2,dim,Number> G; //First fundamental form
-        for (unsigned int i=0; i<dim; ++i)
-            for (unsigned int j=0; j<dim; ++j)
-                G[i][j] = DF_t[i] * DF_t[j];
+namespace d2kinternal
+{
+  template <int dim, int spacedim, typename Number>
+  inline
+  Number determinant (const DerivativeForm<1,dim,spacedim,Number> &DF)
+  {
+    const DerivativeForm<1,spacedim,dim,Number> DF_t = DF.transpose();
+    Tensor<2,dim,Number> G; //First fundamental form
+    for (unsigned int i=0; i<dim; ++i)
+      for (unsigned int j=0; j<dim; ++j)
+        G[i][j] = DF_t[i] * DF_t[j];
 
-        return ( sqrt(determinant(G)) );
-    }
+    return ( sqrt(determinant(G)) );
+  }
 }
 
 
@@ -177,21 +179,23 @@ energies_and_residuals(const typename DoFHandler<dim,spacedim>::active_cell_iter
         auto &p     = points[q];
 
         DerivativeForm<1,dim,spacedim,EnergyType> X;
-        for(unsigned int a=0; a<dim; ++a)
-            for(unsigned int i=0; i<spacedim; ++i) {
-                X[i][a] = jac[i][a];
-                for(unsigned int j=0; j<spacedim; ++j)
-                    X[i][a] += jac[j][a]*gradu[i][j];
+        for (unsigned int a=0; a<dim; ++a)
+          for (unsigned int i=0; i<spacedim; ++i)
+            {
+              X[i][a] = jac[i][a];
+              for (unsigned int j=0; j<spacedim; ++j)
+                X[i][a] += jac[j][a]*gradu[i][j];
             }
 
         EnergyType z = p[spacedim-1]+uz;
         EnergyType psi = d2kinternal::determinant(X)/(z*z);
+//        EnergyType psi = d2kinternal::determinant(X);
 
         double W = fev->get_quadrature().weight(q);
 
         energies[0] += (psi*W);
 
-      
+
       }
 
 
