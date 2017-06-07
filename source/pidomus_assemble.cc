@@ -198,8 +198,8 @@ piDoMUS<dim, spacedim, LAC>::residual(const double t,
 
   signals.begin_residual();
 
-  for (auto i : solution)
-    std::cout << i<<"    ";
+//  for (auto i : solution)
+//    std::cout << i<<"    ";
 
   std::cout << std::endl;
 
