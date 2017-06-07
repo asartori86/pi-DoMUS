@@ -260,7 +260,8 @@ assemble_local_system_residual (const typename DoFHandler<dim,spacedim>::active_
                                   residuals,
                                   true);
 
-  std::cout << "Energy = " << SacadoTools::to_double(energies[0]) << std::endl;
+//  auto &pcout = this->get_pcout();
+//  pcout << "Energy = " << Utilities::MPI::sum(SacadoTools::to_double(energies[0]), this->get_mpi_communicator()) << std::endl;
 
 
   for (unsigned int i=0; i<dofs_per_cell; ++i)
