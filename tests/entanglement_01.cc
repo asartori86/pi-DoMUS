@@ -7,7 +7,7 @@ int main (int argc, char *argv[])
 {
 
   Utilities::MPI::MPI_InitFinalize mpi_initialization(argc, argv,
-                                                      1);
+                                                      numbers::invalid_unsigned_int);
 
   initlog();
   deallog.depth_file(1);

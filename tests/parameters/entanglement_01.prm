@@ -5,20 +5,20 @@
 # DEAL_II_GIT_SHORTREV= 1664b40
 subsection Dirichlet boundary conditions
   set IDs and component masks = 0=u# % 1=u %2=u.N % 3=u.N
-  set IDs and expressions     = 0=0;0;0.05
+  set IDs and expressions     = 0=0;0;0.2-(0.2-0.02)*t
   set Known component names   = u,u,u
   set Used constants          = 
 end
 subsection Domain
   set Colorize                      = false
-  set Copy boundary to manifold ids = false
+  set Copy boundary to manifold ids = true
   set Copy material to manifold ids = false
   set Create default manifolds      = true
-  set Grid to generate              = rectangle
+  set Grid to generate              = file
   set Input grid file name          = grid.msh
-  set Manifold descriptors          = 
+  set Manifold descriptors          = 0=SphericalManifold #% 1=SphericalManifold
   set Mesh smoothing alogrithm      = none
-  set Optional Point<spacedim> 1    = -1,-1,0
+  set Optional Point<spacedim> 1    = 0,0,0
   set Optional Point<spacedim> 2    = 1,1,0
   set Optional double 1             = 1.0
   set Optional double 2             = 0.5
@@ -31,7 +31,7 @@ end
 subsection Entanglement
   set Block of differential components = 1
   set Blocking of the finite element   = u,u,u
-  set Finite element space             = FESystem[FE_Q<2,3>(3)^3]
+  set Finite element space             = FESystem[FE_Q<2,3>(1)^3]
 end
 subsection Error Tables
   set Compute error            = false
@@ -63,11 +63,11 @@ subsection Forcing terms
 end
 subsection IDA Solver Parameters
   set Absolute error tolerance                      = 1e-4
-  set Final time                                    = 1
+  set Final time                                    = 0
   set Ignore algebraic terms for error computations = true
   set Initial condition Newton max iterations       = 3
   set Initial condition Newton parameter            = 0.33
-  set Initial condition type                        = use_y_diff
+  set Initial condition type                        = use_y_dot
   set Initial condition type after restart          = use_y_dot
   set Initial step size                             = 1e-4
   set Initial time                                  = 0
@@ -81,7 +81,7 @@ subsection IDA Solver Parameters
 end
 subsection IMEX Parameters
   set Absolute error tolerance                     = 1e-6
-  set Final time                                   = 0.0
+  set Final time                                   = 1.0
   set Initial time                                 = 0.0
   set Intervals between outputs                    = 1
   set Maximum number of inner nonlinear iterations = 30
@@ -127,10 +127,10 @@ subsection Output Parameters
   set Output partitioning            = false
   set Problem base name              = surface
   set Solution names                 = u
-  set Subdivisions                   = 3
+  set Subdivisions                   = 1
 end
 subsection Refinement
-  set Bottom fraction                        = 0.100000
+  set Bottom fraction                        = 0.03
   set Maximum number of cells (if available) = 0
   set Order (optimize)                       = 2
   set Refinement strategy                    = fraction
@@ -148,20 +148,20 @@ subsection Zero average constraints
   set Zero average on whole domain = 
 end
 subsection pidomus
-  set Adaptive refinement                            = false
+  set Adaptive refinement                            = true
   set Enable finer preconditioner                    = false
-  set Initial global refinement                      = 1
+  set Initial global refinement                      = 0
   set Jacobian solver tolerance                      = 1e-9
   set Max iterations                                 = 50
   set Max iterations finer prec.                     = 0
   set Max tmp vectors                                = 30
   set Max tmp vectors for finer system               = 50
-  set Number of cycles                               = 4
+  set Number of cycles                               = 1
   set Number of eigenvalues to compute               = 10
   set Number of used Arnoldi vectors                 = 0
   set Overwrite Newton's iterations                  = false
   set Print some useful informations about processes = true
-  set Refine mesh during transient                   = false
+  set Refine mesh during transient                   = true
   set Threshold for solver's restart                 = 1e-2
   set Time stepper                                   = imex
   set Use direct solver if available                 = true
