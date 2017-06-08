@@ -160,10 +160,10 @@ energies_and_residuals(const typename DoFHandler<dim,spacedim>::active_cell_iter
     ResidualType rt=0;
     double dut=0;
     this->reinit (et, cell, fe_cache);
-    fe_cache.cache_local_solution_vector("solution_dot",this->get_locally_relevant_solution_dot(),rt);
-    auto &eus = fe_cache.get_values("explicit_solution", "u", u, dut);
+//    fe_cache.cache_local_solution_vector("solution_dot",this->get_locally_relevant_solution_dot(),rt);
+    auto &grad_eus = fe_cache.get_gradients("explicit_solution", "grad_u", u, dut);
     auto &us = fe_cache.get_values("solution", "u", u, et);
-    auto &uts = fe_cache.get_values("solution_dot", "ut", u, rt);
+//    auto &uts = fe_cache.get_values("solution_dot", "ut", u, et);
     auto &grad_us = fe_cache.get_gradients("solution", "grad_u",u, et);
 
     const unsigned int n_q_points = us.size();
@@ -177,7 +177,7 @@ energies_and_residuals(const typename DoFHandler<dim,spacedim>::active_cell_iter
     for (unsigned int q=0; q<n_q_points; ++q)
       {
         auto &uz = us[q][spacedim-1];
-        auto &gradu = grad_us[q];
+        auto &grad_u = grad_us[q];
         auto &jac   = jacs[q];
         auto &p     = points[q];
 
@@ -187,17 +187,27 @@ energies_and_residuals(const typename DoFHandler<dim,spacedim>::active_cell_iter
             {
               X[i][a] = jac[i][a];
               for (unsigned int j=0; j<spacedim; ++j)
-                X[i][a] += jac[j][a]*gradu[i][j];
+                X[i][a] += jac[j][a]*grad_u[i][j];
+            }
+
+        EnergyType Y=0,P=0;
+        for (unsigned int a=0; a<dim; ++a)
+          for (unsigned int i=0; i<spacedim; ++i)
+            {
+              Y=0;
+              for (unsigned int j=0; j<spacedim; ++j)
+                Y += jac[j][a]*grad_u[i][j];
+              P+=Y*Y;
             }
 //        static const double eps = 1e-1;
         EnergyType z = p[spacedim-1]+uz;
         EnergyType psi = d2kinternal::determinant(X)/(z*z);
 //        EnergyType psi = d2kinternal::determinant(X);
 
-        EnergyType stab = scalar_product(gradu,gradu);
+        EnergyType stab = scalar_product(grad_u,grad_u);
         double W = fev->get_quadrature().weight(q);
 
-        energies[0] += (psi*W +stab*JxW[q]);
+        energies[0] += (psi*W + 0.5*P*W /*-stab*JxW[q]*/ /*- .5*scalar_product(grad_u,grad_eus[q])*JxW[q]*//*+ 1e-3*us[q]*us[q]*JxW[q]*/);
 
 //  for (unsigned int i=0; i<local_residuals[0].size(); ++i)
 //    {

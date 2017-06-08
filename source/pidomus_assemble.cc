@@ -201,7 +201,7 @@ piDoMUS<dim, spacedim, LAC>::residual(const double t,
 //  for (auto i : solution)
 //    std::cout << i<<"    ";
 
-  std::cout << std::endl;
+//  std::cout << std::endl;
 
   syncronize(t,solution,solution_dot);
 
