@@ -40,6 +40,24 @@ public:
                               std::vector<std::vector<ResidualType> > &local_residuals,
                               bool compute_only_system_terms) const;
 
+//  template<int dim, int spacedim, typename LAC>
+  virtual void
+  estimate_error_per_cell(Vector<float> &estimated_error) const
+  {
+    //  std::vector<bool> v= {false,false,true};
+    const DoFHandler<dim,spacedim> &dof = this->get_dof_handler();
+    KellyErrorEstimator<dim,spacedim>::estimate (this->get_kelly_mapping(),
+                                                 dof,
+                                                 QGauss <dim-1> (dof.get_fe().degree + 1),
+                                                 typename FunctionMap<spacedim>::type(),
+                                                 this->get_locally_relevant_solution(),
+                                                 estimated_error,
+                                                 ComponentMask(),
+                                                 0,
+                                                 0,
+                                                 dof.get_triangulation().locally_owned_subdomain());
+  }
+
   virtual void connect_to_signals() const
   {
 //    // first of all we get the struct Signals from pidomus
