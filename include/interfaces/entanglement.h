@@ -40,10 +40,21 @@ public:
                               std::vector<std::vector<ResidualType> > &local_residuals,
                               bool compute_only_system_terms) const;
 
-//  virtual void connect_to_signals() const
-//  {
+  virtual void connect_to_signals() const
+  {
 //    // first of all we get the struct Signals from pidomus
 //    auto &signals = this->get_signals();
+//    auto &pcout = this->get_pcout();
+//signals.solution_preprocessing.connect(
+//          [&](FEValuesCache<dim,spacedim> &cache)
+//    {
+
+//      cac
+
+//    }
+
+
+//        );
 
 //    // we can connect calling .connect( and defining a lambda
 //    signals.fix_initial_conditions.connect(
@@ -53,9 +64,11 @@ public:
 //    }
 //    );
 
-//    // or we can define a lambda first
+    // or we can define a lambda first
 //    auto l =  [this](typename LAC::VectorType &, typename LAC::VectorType &)
 //    {
+//        auto tria=this->get_triangulation();
+//        GridTools::remove_anisotropy(const_cast<Triangulation<dim,spacedim>(*tria));
 //      std::cout << "ho raffinato" << std::endl;
 //    };
 
@@ -111,7 +124,7 @@ public:
 //      pcout << "#########  solver_should_restart"<<std::endl;
 //    });
 
-//  }
+  }
 
 
 
@@ -155,70 +168,92 @@ energies_and_residuals(const typename DoFHandler<dim,spacedim>::active_cell_iter
                        bool ) const
 {
   const FEValuesExtractors::Vector u(0);
-  {
-    EnergyType et = 0; // dummy number to define the type of variables
-    ResidualType rt=0;
-    double dut=0;
-    this->reinit (et, cell, fe_cache);
-//    fe_cache.cache_local_solution_vector("solution_dot",this->get_locally_relevant_solution_dot(),rt);
-    auto &grad_eus = fe_cache.get_gradients("explicit_solution", "grad_u", u, dut);
-    auto &us = fe_cache.get_values("solution", "u", u, et);
-//    auto &uts = fe_cache.get_values("solution_dot", "ut", u, et);
-    auto &grad_us = fe_cache.get_gradients("solution", "grad_u",u, et);
 
-    const unsigned int n_q_points = us.size();
-    auto &JxW = fe_cache.get_JxW_values();
-    auto &jacs = fe_cache.get_current_fe_values().get_jacobians();
-    auto fev = dynamic_cast<const FEValues<dim,spacedim> *>(&(fe_cache.get_current_fe_values()));
-    Assert(fev != nullptr, ExcInternalError());
-    auto &mfev = fe_cache.get_current_fe_values();
-    auto &points = fev->get_quadrature_points();
+  EnergyType et = 0; // dummy number to define the type of variables
+  ResidualType rt=0;
+  double dut=0;
+  this->reinit (et, cell, fe_cache);
+  fe_cache.cache_local_solution_vector("solution_dot",this->get_locally_relevant_solution_dot(),rt);
+  auto &grad_eus = fe_cache.get_gradients("explicit_solution", "grad_u", u, dut);
+  auto &us = fe_cache.get_values("solution", "u", u, et);
+  auto &uts = fe_cache.get_values("solution_dot", "ut", u, rt);
+  auto &grad_us = fe_cache.get_gradients("solution", "grad_u",u, et);
 
-    for (unsigned int q=0; q<n_q_points; ++q)
-      {
-        auto &uz = us[q][spacedim-1];
-        auto &grad_u = grad_us[q];
-        auto &jac   = jacs[q];
-        auto &p     = points[q];
+  const unsigned int n_q_points = us.size();
+  auto &JxW = fe_cache.get_JxW_values();
+  auto &jacs = fe_cache.get_current_fe_values().get_jacobians();
+  auto fev = dynamic_cast<const FEValues<dim,spacedim> *>(&(fe_cache.get_current_fe_values()));
+  Assert(fev != nullptr, ExcInternalError());
+  auto &mfev = fe_cache.get_current_fe_values();
+  auto &points = fev->get_quadrature_points();
 
-        DerivativeForm<1,dim,spacedim,EnergyType> X;
-        for (unsigned int a=0; a<dim; ++a)
-          for (unsigned int i=0; i<spacedim; ++i)
-            {
-              X[i][a] = jac[i][a];
-              for (unsigned int j=0; j<spacedim; ++j)
-                X[i][a] += jac[j][a]*grad_u[i][j];
-            }
+  for (unsigned int q=0; q<n_q_points; ++q)
+    {
+      auto &uz = us[q][spacedim-1];
+      auto &grad_u = grad_us[q];
+      auto &jac   = jacs[q];
+      auto &p     = points[q];
 
-        EnergyType Y=0,P=0;
-        for (unsigned int a=0; a<dim; ++a)
-          for (unsigned int i=0; i<spacedim; ++i)
-            {
-              Y=0;
-              for (unsigned int j=0; j<spacedim; ++j)
-                Y += jac[j][a]*grad_u[i][j];
-              P+=Y*Y;
-            }
+      DerivativeForm<1,dim,spacedim,EnergyType> X;
+      for (unsigned int a=0; a<dim; ++a)
+        for (unsigned int i=0; i<spacedim; ++i)
+          {
+            X[i][a] = jac[i][a];
+            for (unsigned int j=0; j<spacedim; ++j)
+              X[i][a] += jac[j][a]*grad_u[i][j];
+          }
+
+      EnergyType Y=0,P=0;
+      for (unsigned int a=0; a<dim; ++a)
+        for (unsigned int i=0; i<spacedim; ++i)
+          {
+            Y=0;
+            for (unsigned int j=0; j<spacedim; ++j)
+              Y += jac[j][a]*grad_u[i][j];
+            P+=Y*Y;
+          }
 //        static const double eps = 1e-1;
-        EnergyType z = p[spacedim-1]+uz;
-        EnergyType psi = d2kinternal::determinant(X)/(z*z);
-//        EnergyType psi = d2kinternal::determinant(X);
+      EnergyType z = p[spacedim-1]+uz;
+      EnergyType psi = d2kinternal::determinant(X)/(z*z);
+      EnergyType psi_ = d2kinternal::determinant(X);
 
-        EnergyType stab = scalar_product(grad_u,grad_u);
-        double W = fev->get_quadrature().weight(q);
+      auto grad_u_ = grad_u;
+      grad_u_[2]=0;
+      grad_u_[0][2]=0;
+      grad_u_[1][2]=0;
 
-        energies[0] += (psi*W + 0.5*P*W /*-stab*JxW[q]*/ /*- .5*scalar_product(grad_u,grad_eus[q])*JxW[q]*//*+ 1e-3*us[q]*us[q]*JxW[q]*/);
+      auto grad_eu_ = grad_eus[q];
+      grad_eu_[2]=0;
+      grad_eu_[0][2]=0;
+      grad_eu_[1][2]=0;
+      EnergyType stab = scalar_product(grad_u,grad_u);
+      double W = fev->get_quadrature().weight(q);
 
-//  for (unsigned int i=0; i<local_residuals[0].size(); ++i)
+      energies[0] += (psi*W  /*+0.001*P*W*/ /* +0.5*stab*JxW[q]*/ +0.1*scalar_product(grad_u_,grad_u_)*JxW[q] /*+ 1e-3*us[q]*us[q]*JxW[q]*/);
+
+      et += psi*W;
+//        static const unsigned int size =local_residuals[0].size();
+//        ResidualType pval = P.val();
+//  for (unsigned int i=0; i<size; ++i)
 //    {
 //      auto v = mfev[u].value(i,q);
-//      local_residuals[0][i] += (uts[q]*v)*JxW[q];
+//      local_residuals[0][i] += (1000.*uts[q]*v);
 //    }
 
-      }
+
+    }
 
 
-  }
+  AnyData &cache = fe_cache.get_cache();
+
+  if (cache.have("area"))
+    {
+      cache.get<double>("area") = SacadoTools::to_double(et);
+//        std::cout << "interface " << SacadoTools::to_double(et) << std::endl;
+    }
+
+
+
 
 }
 

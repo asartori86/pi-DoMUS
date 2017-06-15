@@ -215,29 +215,41 @@ piDoMUS<dim, spacedim, LAC>::residual(const double t,
                                         face_quadrature_formula,
                                         interface.get_face_update_flags());
 
+  double area=0.0;
+  fev_cache.get_cache().add_copy(area, "area");
+
   interface.solution_preprocessing(fev_cache);
 
   dst = 0;
 
-  auto local_copy = [&dst, this] (const pidomus::CopyData & data)
+  double tot_area=0.0;
+
+  auto local_copy = [&dst, &tot_area, this] (const pidomus::CopyData & data)
   {
 
     this->train_constraints[0]->distribute_local_to_global (data.local_residual,
                                                             data.local_dof_indices,
                                                             dst);
+    tot_area += data.helper;
+//      AnyData & cache = fev_cache.get_cache();
+//       pcout << "local_copy " << cache.get<double>("area") << std::endl;
+
   };
 
-  auto local_assemble = [ this ]
+  auto local_assemble = [&tot_area, this ]
                         (const typename DoFHandler<dim, spacedim>::active_cell_iterator & cell,
                          FEValuesCache<dim,spacedim> &scratch,
                          pidomus::CopyData & data)
   {
     this->interface.assemble_local_system_residual(cell,scratch,data);
     // apply conservative loads
+    AnyData &cache = scratch.get_cache();
+    data.helper = cache.get<double>("area");
     this->apply_forcing_terms(cell, scratch, data.local_residual);
 
     if (cell->at_boundary())
       this->apply_neumann_bcs(cell, scratch, data.local_residual);
+
 
 
   };
@@ -269,6 +281,8 @@ piDoMUS<dim, spacedim, LAC>::residual(const double t,
   dst.compress(VectorOperation::insert);
 
   signals.end_residual();
+
+  pcout << "area " << tot_area << std::endl;
 
   return 0;
 }

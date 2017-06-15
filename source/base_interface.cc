@@ -410,6 +410,7 @@ void
 BaseInterface<dim,spacedim,LAC>::
 estimate_error_per_cell(Vector<float> &estimated_error) const
 {
+  std::vector<bool> v= {false,false,true};
   const DoFHandler<dim,spacedim> &dof = this->get_dof_handler();
   KellyErrorEstimator<dim,spacedim>::estimate (get_kelly_mapping(),
                                                dof,
@@ -417,7 +418,7 @@ estimate_error_per_cell(Vector<float> &estimated_error) const
                                                typename FunctionMap<spacedim>::type(),
                                                this->get_locally_relevant_solution(),
                                                estimated_error,
-                                               ComponentMask(),
+                                               ComponentMask(v),
                                                0,
                                                0,
                                                dof.get_triangulation().locally_owned_subdomain());
