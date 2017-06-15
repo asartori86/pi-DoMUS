@@ -282,7 +282,12 @@ piDoMUS<dim, spacedim, LAC>::residual(const double t,
 
   signals.end_residual();
 
-  pcout << "area " << tot_area << std::endl;
+  Point<spacedim,double> p;
+  double ee = dirichlet_bcs.get_mapped_function(0)->value(p,2);
+  pcout << "area " << tot_area
+        << "; eps " <<  ee
+        << "; error " << std::abs(tot_area - (2.*numbers::PI/ee))
+        << std::endl;
 
   return 0;
 }
