@@ -5,7 +5,7 @@
 # DEAL_II_GIT_SHORTREV= 1664b40
 subsection Dirichlet boundary conditions
   set IDs and component masks = 0=u# % 1=u %2=u.N % 3=u.N
-  set IDs and expressions     = 0=0;0;eps0-(eps0-0.02)*t
+  set IDs and expressions     = 0=0;0;eps0#-(eps0-0.02)*t
   set Known component names   = u,u,u
   set Used constants          = eps0=0.5
 end
@@ -91,7 +91,7 @@ subsection IMEX Parameters
   set Number of elements in backtracking sequence  = 6
   set Print useful informations                    = true
   set Relative error tolerance                     = 1e-5
-  set Step size                                    = 1e-2
+  set Step size                                    = 1e10
   set Update continuously Jacobian                 = true
   set Use the KINSOL solver                        = true
 end
@@ -162,8 +162,8 @@ subsection pidomus
   set Overwrite Newton's iterations                  = false
   set Print some useful informations about processes = true
   set Refine mesh during transient                   = true
-  set Threshold for solver's restart                 = 1e-2
-  set Time stepper                                   = ida
+  set Threshold for solver's restart                 = 6e-4
+  set Time stepper                                   = imex
   set Use direct solver if available                 = true
   set Which eigenvalues                              = smallest_real_part
 end
