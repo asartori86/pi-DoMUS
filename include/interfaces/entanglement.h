@@ -191,10 +191,12 @@ energies_and_residuals(const typename DoFHandler<dim,spacedim>::active_cell_iter
   ResidualType rt=0;
   double dut=0;
   this->reinit (et, cell, fe_cache);
-  fe_cache.cache_local_solution_vector("solution_dot",this->get_locally_relevant_solution_dot(),rt);
+//  fe_cache.cache_local_solution_vector("solution_dot",this->get_locally_relevant_solution_dot(),rt);
+//  fe_cache.cache_local_solution_vector("explicit_solution",this->get_locally_relevant_explicit_solution(),dut);
   auto &grad_eus = fe_cache.get_gradients("explicit_solution", "grad_u", u, dut);
   auto &us = fe_cache.get_values("solution", "u", u, et);
-  auto &uts = fe_cache.get_values("solution_dot", "ut", u, rt);
+  auto &ues = fe_cache.get_values("explicit_solution", "uex", u , dut);
+//  auto &uts = fe_cache.get_values("solution_dot", "ut", u, rt);
   auto &grad_us = fe_cache.get_gradients("solution", "grad_u",u, et);
 
   const unsigned int n_q_points = us.size();
@@ -236,20 +238,26 @@ energies_and_residuals(const typename DoFHandler<dim,spacedim>::active_cell_iter
       EnergyType psi_ = d2kinternal::determinant(X);
 
       auto grad_u_ = grad_u;
-      grad_u_[2]=0;
-      grad_u_[0][2]=0;
-      grad_u_[1][2]=0;
+      const double ee = 1e-1;
+      grad_u_[2][0]*=ee;
+      grad_u_[2][1]*=ee;
+      grad_u_[2][2]*=ee;
+      grad_u_[0][2]*=ee;
+      grad_u_[1][2]*=ee;
 
       auto grad_eu_ = grad_eus[q];
+
       grad_eu_[2]=0;
       grad_eu_[0][2]=0;
       grad_eu_[1][2]=0;
       EnergyType stab = scalar_product(grad_u,grad_u);
       double W = fev->get_quadrature().weight(q);
+      EnergyType penalty = ues[q][2]*uz;
 
-      energies[0] += (psi*W  /*+0.001*P*W*/ /* +0.5*stab*JxW[q]*/ +0.1*scalar_product(grad_u_,grad_u_)*JxW[q] /*+ 1e-3*us[q]*us[q]*JxW[q]*/);
+      energies[0] += (psi*W  /*+0.001*P*W*/ /* +0.5*stab*JxW[q]*/ +scalar_product(grad_u_,grad_u_)*JxW[q] /*+penalty*JxW[q]*/);
 
       et += psi*W;
+      dut += SacadoTools::to_double(psi_)*W;
 //        static const unsigned int size =local_residuals[0].size();
 //        ResidualType pval = P.val();
 //  for (unsigned int i=0; i<size; ++i)
@@ -267,6 +275,7 @@ energies_and_residuals(const typename DoFHandler<dim,spacedim>::active_cell_iter
   if (cache.have("area"))
     {
       cache.get<double>("area") = SacadoTools::to_double(et);
+      cache.get<double>("area_eucl") = dut;
 //        std::cout << "interface " << SacadoTools::to_double(et) << std::endl;
     }
 

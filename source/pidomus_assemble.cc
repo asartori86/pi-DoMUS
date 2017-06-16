@@ -217,20 +217,23 @@ piDoMUS<dim, spacedim, LAC>::residual(const double t,
 
   double area=0.0;
   fev_cache.get_cache().add_copy(area, "area");
+  fev_cache.get_cache().add_copy(area, "area_eucl");
 
   interface.solution_preprocessing(fev_cache);
 
   dst = 0;
 
   double tot_area=0.0;
+  double tot_area_eucl=0.0;
 
-  auto local_copy = [&dst, &tot_area, this] (const pidomus::CopyData & data)
+  auto local_copy = [&dst, &tot_area, &tot_area_eucl, this] (const pidomus::CopyData & data)
   {
 
     this->train_constraints[0]->distribute_local_to_global (data.local_residual,
                                                             data.local_dof_indices,
                                                             dst);
     tot_area += data.helper;
+    tot_area_eucl += data.helper_eucl;
 //      AnyData & cache = fev_cache.get_cache();
 //       pcout << "local_copy " << cache.get<double>("area") << std::endl;
 
@@ -245,6 +248,7 @@ piDoMUS<dim, spacedim, LAC>::residual(const double t,
     // apply conservative loads
     AnyData &cache = scratch.get_cache();
     data.helper = cache.get<double>("area");
+    data.helper_eucl = cache.get<double>("area_eucl");
     this->apply_forcing_terms(cell, scratch, data.local_residual);
 
     if (cell->at_boundary())
@@ -283,10 +287,15 @@ piDoMUS<dim, spacedim, LAC>::residual(const double t,
   signals.end_residual();
 
   Point<spacedim,double> p;
-  double ee = dirichlet_bcs.get_mapped_function(0)->value(p,2);
+  const double ee = dirichlet_bcs.get_mapped_function(0)->value(p,2);
+  const double r_ = sqrt(1. + ee*ee);
   pcout << "area " << tot_area
         << "; eps " <<  ee
-        << "; error " << std::abs(tot_area - (2.*numbers::PI/ee))
+        << "; error " << std::abs(tot_area - (2.*numbers::PI/ee*r_) +2.*numbers::PI*r_)
+        << std::endl;
+
+  pcout << "area_eucl " << tot_area_eucl
+        << "; error " << std::abs(tot_area_eucl - (2.*numbers::PI*r_*(r_-ee)))
         << std::endl;
 
   return 0;
