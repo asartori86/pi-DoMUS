@@ -5,9 +5,9 @@
 # DEAL_II_GIT_SHORTREV= 1664b40
 subsection Dirichlet boundary conditions
   set IDs and component masks = 0=u# % 1=u %2=u.N % 3=u.N
-  set IDs and expressions     = 0=0;0;eps0-(eps0-0.02)*t
+  set IDs and expressions     = 0=0;0;eps0*exp(-t)
   set Known component names   = u,u,u
-  set Used constants          = eps0=0.5
+  set Used constants          = eps0=0.7
 end
 subsection Domain
   set Colorize                      = false
@@ -62,8 +62,8 @@ subsection Forcing terms
   set Used constants          = eps=1e-3
 end
 subsection IDA Solver Parameters
-  set Absolute error tolerance                      = 1e-4
-  set Final time                                    = 1
+  set Absolute error tolerance                      = 1e-6
+  set Final time                                    = 10
   set Ignore algebraic terms for error computations = true
   set Initial condition Newton max iterations       = 3
   set Initial condition Newton parameter            = 0.33
@@ -74,14 +74,14 @@ subsection IDA Solver Parameters
   set Maximum number of nonlinear iterations        = 9
   set Maximum order of BDF                          = 5
   set Min step size                                 = 5e-9
-  set Relative error tolerance                      = 1e-3
-  set Seconds between each output                   = 1e-4
+  set Relative error tolerance                      = 1e-4
+  set Seconds between each output                   = 5e-4
   set Show output of time steps                     = true
   set Use local tolerances                          = false
 end
 subsection IMEX Parameters
   set Absolute error tolerance                     = 1e-6
-  set Final time                                   = 1.
+  set Final time                                   = 0.0
   set Initial time                                 = 0.0
   set Intervals between outputs                    = 1
   set Maximum number of inner nonlinear iterations = 30
@@ -97,7 +97,7 @@ subsection IMEX Parameters
 end
 subsection Initial solution
   set Function constants  = 
-  set Function expression = 0; 0;1
+  set Function expression = 0; 0;1#sqrt(0.7*0.7+1 - x*x -y*y)
   set Variable names      = x,y,t
 end
 subsection Initial solution_dot
@@ -123,7 +123,7 @@ end
 subsection Output Parameters
   set Files to save in run directory = 
   set Incremental run prefix         = 
-  set Output format                  = vtu
+  set Output format                  = none
   set Output partitioning            = false
   set Problem base name              = surface
   set Solution names                 = u
@@ -156,14 +156,14 @@ subsection pidomus
   set Max iterations finer prec.                     = 0
   set Max tmp vectors                                = 30
   set Max tmp vectors for finer system               = 50
-  set Number of cycles                               = 1
+  set Number of cycles                               = 6
   set Number of eigenvalues to compute               = 10
   set Number of used Arnoldi vectors                 = 0
   set Overwrite Newton's iterations                  = false
   set Print some useful informations about processes = true
   set Refine mesh during transient                   = true
   set Threshold for solver's restart                 = 1e-2
-  set Time stepper                                   = imex
+  set Time stepper                                   = ida
   set Use direct solver if available                 = true
   set Which eigenvalues                              = smallest_real_part
 end

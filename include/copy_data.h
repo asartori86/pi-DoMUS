@@ -27,7 +27,8 @@ namespace pidomus
       local_matrices     (n_matrices,
                           FullMatrix<double>(dofs_per_cell,
                                              dofs_per_cell)),
-      helper(0.0)
+      helper(0.0),
+      helper_eucl(0.0)
     {}
 
     CopyData (const CopyData &data)
@@ -35,7 +36,8 @@ namespace pidomus
       local_dof_indices  (data.local_dof_indices),
       local_residual     (data.local_residual),
       local_matrices     (data.local_matrices),
-      helper             (data.helper)
+      helper             (data.helper),
+      helper_eucl             (data.helper_eucl)
     {}
 
     ~CopyData()
@@ -45,6 +47,7 @@ namespace pidomus
     std::vector<double>                   local_residual;
     std::vector<FullMatrix<double> >      local_matrices;
     double                               helper;
+    double                               helper_eucl;
   };
 
   struct CopyMass
