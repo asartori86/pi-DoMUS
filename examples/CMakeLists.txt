@@ -22,10 +22,11 @@ install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/
   # All CMakeLists.txt except the one in examples/
   #
   PATTERN "heat-equation/CMakeLists.txt"
+  PATTERN "entanglement/CMakeLists.txt"
   #
   # Special files:
   #
-  # PATTERN "grid-2.2.ucd" # e.g.
+  PATTERN "grid.msh"
   )
 
 MESSAGE(STATUS "Setting up examples - Done")

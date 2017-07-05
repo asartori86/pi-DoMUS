@@ -74,9 +74,11 @@ endforeach()
 # if we build out of source (e.g. build) we create a link to the
 # parameter file
 if(NOT EXISTS "${CMAKE_BINARY_DIR}/${PARAMETER_FILE}")
+  foreach(_file ${PARAMETER_FILE})
   execute_process(COMMAND
-    ln -s ${CMAKE_SOURCE_DIR}/${PARAMETER_FILE}
-    ${CMAKE_BINARY_DIR}/${PARAMETER_FILE})
+    ln -fs ${CMAKE_SOURCE_DIR}/${_file}
+    ${CMAKE_BINARY_DIR}/${_file})
+  endforeach()
 endif()
 
 endmacro()
