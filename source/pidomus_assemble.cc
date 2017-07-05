@@ -287,15 +287,17 @@ piDoMUS<dim, spacedim, LAC>::residual(const double t,
   signals.end_residual();
 
   Point<spacedim,double> p;
+  const double _tot = Utilities::MPI::sum(tot_area,comm);
+  const double _tote = Utilities::MPI::sum(tot_area_eucl,comm);
   const double ee = dirichlet_bcs.get_mapped_function(0)->value(p,2);
   const double r_ = sqrt(1. + ee*ee);
-  pcout << "area " << tot_area
+  pcout << "area " << _tot
         << "; eps " <<  ee
-        << "; error " << std::abs(tot_area - (2.*numbers::PI/ee*r_) +2.*numbers::PI*r_)
+        << "; error " << std::abs(_tot - (2.*numbers::PI/ee*r_) +2.*numbers::PI*r_)
         << std::endl;
 
-  pcout << "area_eucl " << tot_area_eucl
-        << "; error " << std::abs(tot_area_eucl - (2.*numbers::PI*r_*(r_-ee)))
+  pcout << "area_eucl " << _tote
+        << "; error " << std::abs(_tote - (2.*numbers::PI*r_*(r_-ee)))
         << std::endl;
 
   return 0;
