@@ -1,8 +1,9 @@
 #ifndef _pidoums_entanglement_h_
 #define _pidoums_entanglement_h_
 
-#include "pde_system_interface.h"
+#include <pde_system_interface.h>
 #include <deal2lkit/sacado_tools.h>
+#include <deal2lkit/parsed_preconditioner/amg.h>
 
 
 
@@ -39,6 +40,12 @@ public:
                               std::vector<EnergyType> &energies,
                               std::vector<std::vector<ResidualType> > &local_residuals,
                               bool compute_only_system_terms) const;
+
+  void compute_system_operators(const std::vector<shared_ptr<LATrilinos::BlockMatrix> >,
+                                LinearOperator<LATrilinos::VectorType> &,
+                                LinearOperator<LATrilinos::VectorType> &,
+                                LinearOperator<LATrilinos::VectorType> &) const;
+
 
 //  template<int dim, int spacedim, typename LAC>
   virtual void
@@ -144,7 +151,7 @@ public:
 
   }
 
-
+  mutable ParsedAMGPreconditioner U_prec;
 
 
 };
@@ -282,6 +289,37 @@ energies_and_residuals(const typename DoFHandler<dim,spacedim>::active_cell_iter
 
 
 
+}
+
+
+
+template <int dim, int spacedim, typename LAC>
+void
+  EntanglementInterface<dim,spacedim,LAC>::compute_system_operators(
+  const std::vector<shared_ptr<LATrilinos::BlockMatrix> > matrices,
+  LinearOperator<LATrilinos::VectorType> &system_op,
+  LinearOperator<LATrilinos::VectorType> &prec_op,
+  LinearOperator<LATrilinos::VectorType> &) const
+{
+
+  U_prec.initialize_preconditioner(matrices[0]->block(0,0));
+
+  auto A_inv = linear_operator<LATrilinos::VectorType::BlockType>( matrices[0]->block(0,0), U_prec);
+
+  auto A  = linear_operator<LATrilinos::VectorType::BlockType>( matrices[0]->block(0,0) );
+
+
+
+  // ASSEMBLE THE PROBLEM:
+  system_op  = block_operator<1, 1, LATrilinos::VectorType>({{
+      {{ A }}
+    }
+  });
+
+  prec_op = block_operator<1, 1, LATrilinos::VectorType>({{
+      {{ A_inv}} ,
+    }
+  });
 }
 
 
