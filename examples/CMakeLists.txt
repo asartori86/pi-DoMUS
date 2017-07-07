@@ -26,7 +26,7 @@ install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/
   #
   # Special files:
   #
-  # PATTERN "grid-2.2.ucd" # e.g.
+  PATTERN "heart/source/*txt"
   )
 
 MESSAGE(STATUS "Setting up examples - Done")
