@@ -1,11 +1,24 @@
 # Parameter file generated with 
 # D2K_GIT_BRANCH=       master
-# D2K_GIT_SHORTREV=     2920ab2
-# DEAL_II_GIT_BRANCH=   master
-# DEAL_II_GIT_SHORTREV= 1664b40
+# D2K_GIT_SHORTREV=     c3c813b
+# DEAL_II_GIT_BRANCH=   dealii-8.5
+# DEAL_II_GIT_SHORTREV= 007eaa5
+subsection AMG Preconditioner
+  set Aggregation threshold              = 0.00100
+  set Coarse type                        = Amesos-KLU
+  set Elliptic                           = true
+  set High Order Elements                = false
+  set Number of cycles                   = 1
+  set Output details                     = false
+  set Smoother overlap                   = 0
+  set Smoother sweeps                    = 2
+  set Smoother type                      = Chebyshev
+  set Variable related to constant modes = none
+  set w-cycle                            = false
+end
 subsection Dirichlet boundary conditions
-  set IDs and component masks = 0=u# % 1=u %2=u.N % 3=u.N
-  set IDs and expressions     = 0=0;0;eps0*exp(-t)
+  set IDs and component masks = 0=u
+  set IDs and expressions     = 0=0;0;exp(-t)
   set Known component names   = u,u,u
   set Used constants          = eps0=0.7
 end
@@ -16,7 +29,7 @@ subsection Domain
   set Create default manifolds      = true
   set Grid to generate              = file
   set Input grid file name          = grid.msh
-  set Manifold descriptors          = 0=SphericalManifold #% 1=SphericalManifold
+  set Manifold descriptors          = 0=SphericalManifold
   set Mesh smoothing alogrithm      = none
   set Optional Point<spacedim> 1    = 0,0,0
   set Optional Point<spacedim> 2    = 1,1,0
@@ -56,26 +69,26 @@ subsection Exact solution
   set Variable names      = x,y,t
 end
 subsection Forcing terms
-  set IDs and component masks = #1=u
-  set IDs and expressions     = #1=0;0;-eps*z
+  set IDs and component masks = 
+  set IDs and expressions     = 
   set Known component names   = u,u,u
   set Used constants          = eps=1e-3
 end
 subsection IDA Solver Parameters
-  set Absolute error tolerance                      = 1e-6
+  set Absolute error tolerance                      = 1e-8
   set Final time                                    = 10
   set Ignore algebraic terms for error computations = true
   set Initial condition Newton max iterations       = 3
   set Initial condition Newton parameter            = 0.33
-  set Initial condition type                        = use_y_diff
+  set Initial condition type                        = use_y_dot
   set Initial condition type after restart          = use_y_dot
   set Initial step size                             = 1e-4
   set Initial time                                  = 0
   set Maximum number of nonlinear iterations        = 9
   set Maximum order of BDF                          = 5
   set Min step size                                 = 5e-9
-  set Relative error tolerance                      = 1e-4
-  set Seconds between each output                   = 5e-4
+  set Relative error tolerance                      = 1e-6
+  set Seconds between each output                   = 5e-3
   set Show output of time steps                     = true
   set Use local tolerances                          = false
 end
@@ -97,7 +110,7 @@ subsection IMEX Parameters
 end
 subsection Initial solution
   set Function constants  = 
-  set Function expression = 0; 0;1#sqrt(0.7*0.7+1 - x*x -y*y)
+  set Function expression = 0; 0;1
   set Variable names      = x,y,t
 end
 subsection Initial solution_dot
@@ -150,19 +163,19 @@ end
 subsection pidomus
   set Adaptive refinement                            = true
   set Enable finer preconditioner                    = false
-  set Initial global refinement                      = 0
+  set Initial global refinement                      = 3
   set Jacobian solver tolerance                      = 1e-9
-  set Max iterations                                 = 50
+  set Max iterations                                 = 5000
   set Max iterations finer prec.                     = 0
   set Max tmp vectors                                = 30
   set Max tmp vectors for finer system               = 50
-  set Number of cycles                               = 6
+  set Number of cycles                               = 1
   set Number of eigenvalues to compute               = 10
   set Number of used Arnoldi vectors                 = 0
   set Overwrite Newton's iterations                  = false
   set Print some useful informations about processes = true
   set Refine mesh during transient                   = true
-  set Threshold for solver's restart                 = 1e-2
+  set Threshold for solver's restart                 = 5e-4
   set Time stepper                                   = ida
   set Use direct solver if available                 = true
   set Which eigenvalues                              = smallest_real_part

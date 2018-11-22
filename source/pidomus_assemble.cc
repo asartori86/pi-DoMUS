@@ -291,11 +291,11 @@ piDoMUS<dim, spacedim, LAC>::residual(const double t,
   const double r_ = sqrt(1. + ee*ee);
   pcout << "area " << tot_area
         << "; eps " <<  ee
-        << "; error " << std::abs(tot_area - (2.*numbers::PI/ee*r_) +2.*numbers::PI*r_)
+        << "; error " << std::abs(Utilities::MPI::sum(tot_area,comm) - (2.*numbers::PI/ee*r_) +2.*numbers::PI)
         << std::endl;
 
   pcout << "area_eucl " << tot_area_eucl
-        << "; error " << std::abs(tot_area_eucl - (2.*numbers::PI*r_*(r_-ee)))
+        << "; error " << std::abs(Utilities::MPI::sum(tot_area_eucl,comm) - (2.*numbers::PI*r_*(r_-ee)))
         << std::endl;
 
   return 0;
